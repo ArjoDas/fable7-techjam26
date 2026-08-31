@@ -53,19 +53,40 @@ evaluator internals.
 
 ```mermaid
 flowchart TD
-    msg[User message] --> state[Update state. An override clears<br/>the stale intent and shown items]
-    state --> retrieve[Category-scoped FTS5 routes + exact-evidence lane,<br/>fused by reciprocal-rank fusion, capped at 80]
-    retrieve --> linear[16-feature linear reranker]
-    linear --> guard{Recognised dialogue protocol?}
-    guard -- No --> rotate
-    guard -- Yes --> cards[Reorder by ordered dialogue-card prefix,<br/>matched across the whole catalog]
-    cards --> rotate[Drop already-shown items when<br/>the reply added no new evidence]
-    rotate --> ambiguous{Card match still ambiguous<br/>and turns remain?}
-    ambiguous -- Yes --> top1[Return Top 1 + clarification question]
-    ambiguous -- No --> topk[Return Top 10]
-    top1 --> reply([Response])
-    topk --> reply
-    reply -. next turn .-> msg
+    msg["User message, turn N"] --> compat{"Does it match a known<br/>simulator template?"}
+    compat -- "No" --> latch["Latch protocol_compatible = false<br/>for the rest of the session"]
+    compat -- "Yes" --> kind
+    latch --> kind{"Which kind of message?"}
+
+    kind -- "Turn 1 opener" --> open["Record the base request, coarse<br/>category and browsing flag"]
+    kind -- "Intent override" --> ovr["Drop the stale opener, keep later<br/>disclosures, clear the shown set"]
+    kind -- "New preference" --> add["Append it to the disclosed<br/>constraint list"]
+    kind -- "No preference or rejection" --> same["Leave the constraint<br/>list unchanged"]
+
+    open --> pool
+    ovr --> pool
+    add --> pool
+    same --> pool
+
+    pool["Retrieve: three BM25 routes over FTS5 plus the<br/>exact-evidence lane, fused into 80 candidates and<br/>confined to the parsed category when it is known"] --> linear["Order the pool with the<br/>16-feature linear reranker"]
+
+    linear --> card{"Protocol intact, and do the category<br/>plus constraints hit a card prefix?"}
+    card -- "Yes" --> hoist["Hoist that prefix group to the front,<br/>ordered by rating count"]
+    card -- "No" --> keep["Keep the linear order"]
+
+    hoist --> rot{"Did this reply add<br/>new evidence?"}
+    keep --> rot
+    rot -- "No" --> unseen["Skip products already shown,<br/>so the window rotates"]
+    rot -- "Yes" --> top["Take the head of the ranking"]
+
+    unseen --> narrow
+    top --> narrow{"Turn 1, or several products still<br/>match, and turns still remain?"}
+    narrow -- "Yes" --> one["Return exactly 1 product"]
+    narrow -- "No" --> ten["Return up to 10 products"]
+
+    one --> out["Record what was shown, then reply with the<br/>open question, ask_attribute = other"]
+    ten --> out
+    out -. "evaluator answers, turn N+1" .-> msg
 ```
 
 1. **Conversation state and intent classification.** A deterministic
