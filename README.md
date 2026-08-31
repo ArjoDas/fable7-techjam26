@@ -51,6 +51,23 @@ confidence-qualified output. All indexes are built once at startup from
 `data/catalog.jsonl` alone; runtime code never reads targets, labels, or
 evaluator internals.
 
+```mermaid
+flowchart TD
+    msg[User message] --> state[Update state. An override clears<br/>the stale intent and shown items]
+    state --> retrieve[Category-scoped FTS5 routes + exact-evidence lane,<br/>fused by reciprocal-rank fusion, capped at 80]
+    retrieve --> linear[16-feature linear reranker]
+    linear --> guard{Recognised dialogue protocol?}
+    guard -- No --> rotate
+    guard -- Yes --> cards[Reorder by ordered dialogue-card prefix,<br/>matched across the whole catalog]
+    cards --> rotate[Drop already-shown items when<br/>the reply added no new evidence]
+    rotate --> ambiguous{Card match still ambiguous<br/>and turns remain?}
+    ambiguous -- Yes --> top1[Return Top 1 + clarification question]
+    ambiguous -- No --> topk[Return Top 10]
+    top1 --> reply([Response])
+    topk --> reply
+    reply -. next turn .-> msg
+```
+
 1. **Conversation state and intent classification.** A deterministic
    classifier tracks the base request, separately disclosed hard constraints,
    boundary replies, already shown product IDs, and intent overrides. An
