@@ -104,6 +104,7 @@ class Agent:
         use_exhaustion_release: bool = False,
         ambiguity_release_turn: int = 10,
         dialogue_rating_weight: float = 0.0,
+        enable_trace: bool = False,
     ) -> None:
         self.catalog_path = Path(catalog_path)
         self.connection = sqlite3.connect(":memory:")
@@ -132,6 +133,7 @@ class Agent:
         self._use_exhaustion_release = use_exhaustion_release
         self._ambiguity_release_turn = ambiguity_release_turn
         self._dialogue_rating_weight = dialogue_rating_weight
+        self._enable_trace = enable_trace
         self._exact_cache: dict[str, tuple[str, ...]] = {}
         self._exact_membership_cache: dict[str, frozenset[str]] = {}
         self._build_index()
@@ -295,6 +297,7 @@ class Agent:
             "category_query": "",
             "boundary_seen": False,
             "exhausted": False,
+            "last_trace": None,
         }
 
     @staticmethod
@@ -826,6 +829,7 @@ class Agent:
             route_limit=self._route_candidate_limit,
             category=category_filter,
         )
+        sparse_candidates = list(candidates)
         constraints = self._constraint_phrases(state["messages"])
         state["query_profile"] = self._query_profile(state)
         exact_candidates = self._exact_evidence_candidates(constraints)
@@ -844,19 +848,24 @@ class Agent:
                 exact_candidates
                 + [candidate for candidate in candidates if candidate not in exact_set]
             )[:self._rerank_candidate_limit]
+        merged_candidates = list(candidates)
         state["last_candidates"] = candidates
         state["last_query_terms"] = unique_terms
         ranked = self._rerank(candidates, state, unique_terms, len(candidates))
+        linear_ranking = list(ranked)
         state["last_linear_ranking"] = ranked
         ranked = self._dialogue_rerank(ranked, state)
         state["last_ranking"] = ranked
         signature = tuple(unique_terms)
         shown = state["shown"]
+        shown_before = len(shown) if isinstance(shown, set) else 0
+        coverage_rotation_used = False
         if (
             self._use_coverage_rotation
             and state["last_signature"] == signature
             and isinstance(shown, set)
         ):
+            coverage_rotation_used = True
             head = ranked[:self._coverage_head]
             selected = head + [
                 parent_asin for parent_asin in ranked[self._coverage_head:]
@@ -871,13 +880,16 @@ class Agent:
                 selected = selected[:top_k]
         else:
             selected = ranked[:top_k]
+        opening_abstention_used = False
         if (
             turn == 1
             and self._opening_output_k < top_k
             and bool(state.get("protocol_compatible"))
             and (bool(state.get("exploratory")) or bool(constraints))
         ):
+            opening_abstention_used = len(selected) > self._opening_output_k
             selected = selected[: self._opening_output_k]
+        ambiguity_abstention_used = False
         if (
             self._ambiguous_output_k < top_k
             # There is no later clarification opportunity on the final turn,
@@ -892,6 +904,7 @@ class Agent:
                 or bool(state.get("boundary_seen"))
             )
         ):
+            ambiguity_abstention_used = len(selected) > self._ambiguous_output_k
             selected = selected[: self._ambiguous_output_k]
         if isinstance(shown, set):
             shown.update(selected)
@@ -899,6 +912,55 @@ class Agent:
         recommendations = [
             {"parent_asin": parent_asin} for parent_asin in selected
         ]
+        if self._enable_trace:
+            category_count = None
+            if category_filter:
+                row = self.connection.execute(
+                    "SELECT COUNT(*) FROM products WHERE coarse_category = ?",
+                    (category_filter,),
+                ).fetchone()
+                category_count = int(row[0]) if row else 0
+            dialogue_match_count = (
+                int(state.get("last_dialogue_match_count", 0))
+                if bool(state.get("protocol_compatible"))
+                else None
+            )
+            state["last_trace"] = {
+                "catalog": {"count": len(self._product_views)},
+                "conversation": {
+                    "protocol_compatible": bool(state.get("protocol_compatible")),
+                    "intent_mode": mode,
+                    "override_seen": bool(state.get("override_seen")),
+                    "boundary_seen": bool(state.get("boundary_seen")),
+                },
+                "query": {
+                    "category": str(state.get("category_query", "")),
+                    "category_applied": category_filter is not None,
+                    "category_count": category_count,
+                    "terms": list(unique_terms),
+                    "constraints": list(constraints),
+                },
+                "retrieval": {
+                    "bm25_count": len(sparse_candidates),
+                    "exact_evidence_count": len(exact_candidates),
+                    "merged_count": len(merged_candidates),
+                    "candidate_asins": list(merged_candidates),
+                },
+                "ranking": {
+                    "linear_count": len(linear_ranking),
+                    "linear_head": list(linear_ranking[:10]),
+                    "dialogue_match_count": dialogue_match_count,
+                    "dialogue_head": list(ranked[:10]),
+                },
+                "selection": {
+                    "coverage_rotation_used": coverage_rotation_used,
+                    "opening_abstention_used": opening_abstention_used,
+                    "ambiguity_abstention_used": ambiguity_abstention_used,
+                    "shown_before": shown_before,
+                    "shown_after": len(shown) if isinstance(shown, set) else shown_before,
+                    "selected": list(selected),
+                },
+            }
         return {
             "message": "Here are the closest matches. What other requirement matters most?",
             "ask_attribute": "other",

@@ -45,6 +45,7 @@ class AgentStateTest(unittest.TestCase):
             "".join(json.dumps(product) + "\n" for product in products),
             encoding="utf-8",
         )
+        self.catalog_path = catalog_path
         self.agent = Agent(catalog_path)
         self.agent.reset("session", {"preference_tags": ["durability"]})
 
@@ -205,6 +206,22 @@ class AgentStateTest(unittest.TestCase):
         self.assertEqual(self.agent._intent_mode(browsing), "constrained browsing")
         browsing["override_seen"] = True
         self.assertEqual(self.agent._intent_mode(browsing), "intent override")
+
+    def test_optional_trace_does_not_change_official_response(self) -> None:
+        traced = Agent(self.catalog_path, enable_trace=True)
+        try:
+            traced.reset("session", {"preference_tags": ["durability"]})
+            message = "I'm looking for accessories belts. A key requirement is: leather."
+            expected = self.agent.respond("session", message, 1, 10)
+            actual = traced.respond("session", message, 1, 10)
+            self.assertEqual(actual, expected)
+            trace = traced._sessions["session"]["last_trace"]
+            self.assertEqual(trace["catalog"]["count"], 3)
+            self.assertTrue(trace["conversation"]["protocol_compatible"])
+            self.assertEqual(trace["query"]["category"], "accessories belts")
+            self.assertIn("A", trace["selection"]["selected"])
+        finally:
+            traced.connection.close()
 
 
 if __name__ == "__main__":

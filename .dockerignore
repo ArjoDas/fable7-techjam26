@@ -1,0 +1,16 @@
+.git
+.venv
+.venv-demo
+.venv-train
+__pycache__
+*.pyc
+results.json
+web/.next
+web/node_modules
+data/public_set.jsonl
+data/releases
+docs
+evaluator
+scripts
+tests
+

@@ -15,6 +15,104 @@ history behind this result (six checkpoints, all accepted and rejected
 variants, and the parallel unmerged branch lines) is in
 [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
+## Web Demo Quickstart
+
+The demo exposes this repository's agent through a FastAPI service and a
+Next.js frontend. It has two modes:
+
+- **Shop** at `/demo`: unrestricted, free-form shopping conversation.
+- **Internals** at `/internals`: guided messages plus a live visualization of
+  the 50,000-product retrieval and ranking funnel.
+
+The two modes call the same `starter.agent.Agent`. The Internals mode only adds
+diagnostic output; it does not use a separate recommendation implementation.
+
+### Prerequisites
+
+- Python 3.10 or later with SQLite FTS5
+- Node.js 20.9 or later and npm
+- `data/catalog.jsonl` from the catalog setup in [Get the catalog](#setup-and-reproducing-our-results)
+
+### 1. Start the API
+
+From the repository root:
+
+```bash
+python3 -m venv .venv-demo
+source .venv-demo/bin/activate
+python -m pip install -r requirements-api.txt
+uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+The API starts serving immediately while the catalog indexes are prepared in a
+background thread. Check readiness with:
+
+```bash
+curl http://127.0.0.1:8000/readyz
+```
+
+Wait for `"status":"ready"` before opening a conversation. The documented
+development-machine cold start for the evaluator is about 44 seconds; the
+actual API startup time is included in the readiness response.
+
+### 2. Start the frontend
+
+In a second terminal:
+
+```bash
+cd web
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Choose **Open the engine**
+for the guided internals demo or **Try the conversation** for the shopper view.
+
+### Configuration
+
+The API accepts these optional environment variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `CATALOG_PATH` | `data/catalog.jsonl` | Frozen catalog location |
+| `ALLOWED_ORIGINS` | localhost ports on `3000` | Comma-separated browser origins |
+| `SESSION_TTL_SECONDS` | `1800` | Inactive in-memory session lifetime |
+
+The frontend uses `NEXT_PUBLIC_API_BASE_URL`, defined in `web/.env.example`.
+Public frontend variables are embedded at build time, so set it before
+`npm run build` for a deployed API.
+
+### Verify the demo
+
+With the Python environment active and both local servers running:
+
+```bash
+python -m unittest tests.test_api -v
+python -m unittest discover tests -v
+cd web
+npm run typecheck
+npm run build
+npm run test:e2e
+```
+
+The browser test uses an installed Google Chrome by default. Override its path
+when needed:
+
+```bash
+PLAYWRIGHT_CHROME_PATH=/path/to/chrome npm run test:e2e
+```
+
+The API can also run as a single-worker container:
+
+```bash
+docker build -f Dockerfile.api -t techjam-agent-api .
+docker run --rm -p 8000:8000 techjam-agent-api
+```
+
+Use one API worker for this MVP. The agent's SQLite indexes and conversation
+sessions are process-local.
+
 ## The Challenge
 
 Build an AI shopping agent that asks useful follow-up questions and recommends
