@@ -43,6 +43,13 @@ class DialogueCardTest(unittest.TestCase):
         self.assertTrue(message_is_protocol_compatible(message))
         self.assertEqual(category_from_message(message), "men shirts")
 
+    def test_shopping_intent_switch_is_protocol_compatible(self) -> None:
+        self.assertTrue(
+            message_is_protocol_compatible(
+                "I'm changing my shopping intent to buying."
+            )
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

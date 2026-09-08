@@ -22,8 +22,9 @@ class MessageOption(BaseModel):
     id: str
     label: str
     message_preview: str
-    kind: Literal["opening", "constraint", "no_preference", "override"]
+    kind: Literal["opening", "constraint", "no_preference", "override", "intent"]
     estimated_remaining: int | None = None
+    intent: Literal["browse", "buy"] | None = None
 
 
 class ProductCard(BaseModel):
@@ -78,4 +79,3 @@ class ReadyResponse(BaseModel):
     catalog_size: int | None = None
     startup_seconds: float | None = None
     message: str | None = None
-

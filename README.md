@@ -1,4 +1,4 @@
-# TechJam Conversational E-Commerce Search — Team Solution
+# Fable7 — TechJam Conversational E-Commerce Search
 
 A fully offline, standard-library conversational shopping agent that finds the
 customer's hidden target product among 50,000 catalog items. On the released
@@ -15,7 +15,7 @@ history behind this result (six checkpoints, all accepted and rejected
 variants, and the parallel unmerged branch lines) is in
 [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
-## Web Demo Quickstart
+## Fable7 Web Demo Quickstart
 
 The demo exposes this repository's agent through a FastAPI service and a
 Next.js frontend. It has two modes:

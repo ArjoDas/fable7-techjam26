@@ -108,6 +108,7 @@ def message_is_protocol_compatible(message: str) -> bool:
             "i'm looking for ",
             "for that, what matters is:",
             "actually, ignore my earlier preference. what i need is:",
+            "i'm changing my shopping intent to ",
             "i don't have a preference for ",
             "i don't have an additional preference for ",
             "those options are not quite right yet.",

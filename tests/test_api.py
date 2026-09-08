@@ -91,6 +91,13 @@ class ApiTest(unittest.TestCase):
         created = self.client.post("/v1/sessions", json={"mode": "internals"})
         payload = created.json()
         self.assertTrue(payload["message_options"])
+        self.assertEqual(
+            {option["intent"] for option in payload["message_options"]},
+            {"browse", "buy"},
+        )
+        self.assertTrue(
+            all(option["label"].startswith(("Explore ", "Shop ")) for option in payload["message_options"])
+        )
         session_id = payload["session_id"]
         rejected = self.client.post(
             f"/v1/sessions/{session_id}/turns", json={"option_id": "stale"}
@@ -106,6 +113,21 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(result["trace"]["catalog"]["count"], 3)
         self.assertIn("retrieval", result["trace"])
         self.assertTrue(result["message_options"])
+        switch = next(
+            option
+            for option in result["message_options"]
+            if option["kind"] == "intent" and option["intent"] == "buy"
+        )
+        switched = self.client.post(
+            f"/v1/sessions/{session_id}/turns", json={"option_id": switch["id"]}
+        )
+        self.assertEqual(switched.status_code, 200, switched.text)
+        self.assertEqual(switched.json()["session_id"], session_id)
+        self.assertEqual(switched.json()["turn"], 2)
+        self.assertEqual(
+            switched.json()["trace"]["conversation"]["intent_mode"],
+            "specific buying",
+        )
 
     def test_server_enforces_ten_turn_limit_and_reset(self) -> None:
         created = self.client.post("/v1/sessions", json={"mode": "demo"}).json()

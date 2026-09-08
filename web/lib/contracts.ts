@@ -4,8 +4,9 @@ export type MessageOption = {
   id: string;
   label: string;
   message_preview: string;
-  kind: "opening" | "constraint" | "no_preference" | "override";
+  kind: "opening" | "constraint" | "no_preference" | "override" | "intent";
   estimated_remaining: number | null;
+  intent: "browse" | "buy" | null;
 };
 
 export type ProductCard = {
@@ -81,4 +82,3 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
-

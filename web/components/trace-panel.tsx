@@ -11,7 +11,7 @@ export function TracePanel({ trace }: { trace: AgentTrace | null }) {
         <span className="section-label">Pipeline inspector</span>
         <div className="trace-empty">
           <span>↳</span>
-          <p>Choose an opening message to reveal the retrieval path.</p>
+          <h2>Choose an opening message to reveal the retrieval path.</h2>
         </div>
       </aside>
     );

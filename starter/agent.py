@@ -306,6 +306,15 @@ class Agent:
         return any(marker in lowered for marker in ("actually", "instead of", "forget ", "ignore my earlier"))
 
     @staticmethod
+    def _shopping_intent(message: str) -> bool | None:
+        lowered = normalize_protocol_text(message).lower().strip().rstrip(".")
+        if lowered == "i'm changing my shopping intent to browsing":
+            return True
+        if lowered == "i'm changing my shopping intent to buying":
+            return False
+        return None
+
+    @staticmethod
     def _has_preference(message: str) -> bool:
         lowered = normalize_protocol_text(message).lower()
         return not any(
@@ -771,6 +780,7 @@ class Agent:
         if not message_is_protocol_compatible(user_message):
             state["protocol_compatible"] = False
         lowered_user_message = normalize_protocol_text(user_message).lower()
+        shopping_intent = self._shopping_intent(user_message)
         if "don't have a preference for " in lowered_user_message:
             state["boundary_seen"] = True
         if "don't have an additional preference for " in lowered_user_message:
@@ -784,6 +794,12 @@ class Agent:
             )
             state["messages"] = [user_message]
             state["category_query"] = category_from_message(user_message)
+        elif shopping_intent is not None:
+            # Shopping mode is conversational state, not a product constraint.
+            # Keep the existing category and disclosed preferences intact.
+            state["exploratory"] = shopping_intent
+            state["override_seen"] = False
+            state["exhausted"] = False
         elif self._is_override(user_message):
             state["override_seen"] = True
             state["exhausted"] = False

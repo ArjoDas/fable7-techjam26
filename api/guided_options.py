@@ -10,6 +10,7 @@ def _option(
     message: str,
     kind: str,
     estimated_remaining: int | None = None,
+    intent: str | None = None,
 ) -> dict[str, Any]:
     return {
         "id": secrets.token_urlsafe(9),
@@ -17,6 +18,7 @@ def _option(
         "message_preview": message,
         "kind": kind,
         "estimated_remaining": estimated_remaining,
+        "intent": intent,
     }
 
 
@@ -26,13 +28,23 @@ def opening_options(categories: list[dict[str, Any]]) -> list[dict[str, Any]]:
         value = str(category["value"])
         label = str(category["label"])
         count = int(category["count"])
-        options.append(
-            _option(
-                f"Explore {label}",
-                f"I'm looking for {value}, but I'm still exploring.",
-                "opening",
-                count,
-            )
+        options.extend(
+            [
+                _option(
+                    f"Explore {label}",
+                    f"I'm looking for {value}, but I'm still exploring.",
+                    "opening",
+                    count,
+                    "browse",
+                ),
+                _option(
+                    f"Shop {label}",
+                    f"I'm looking for {value}.",
+                    "opening",
+                    count,
+                    "buy",
+                ),
+            ]
         )
     return options
 
@@ -89,11 +101,30 @@ def follow_up_options(agent: Any, session_id: str) -> list[dict[str, Any]]:
         _, value, remaining = candidates[-1]
         options.append(
             _option(
-                "Change direction",
+                "Override preference",
                 f"Actually, ignore my earlier preference. What I need is: {value}.",
                 "override",
                 remaining,
             )
         )
+    if state.get("exploratory"):
+        options.append(
+            _option(
+                "Switch to buying",
+                "I'm changing my shopping intent to buying.",
+                "intent",
+                current_matches or None,
+                "buy",
+            )
+        )
+    else:
+        options.append(
+            _option(
+                "Switch to browsing",
+                "I'm changing my shopping intent to browsing.",
+                "intent",
+                current_matches or None,
+                "browse",
+            )
+        )
     return options
-

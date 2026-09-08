@@ -13,8 +13,7 @@ export function ProductGrid({ products }: { products: ProductCard[] }) {
   if (!products.length) {
     return (
       <div className="empty-products">
-        <span>◇</span>
-        <p>Your recommendations will collect here.</p>
+        <h2>Your recommendations will be displayed here</h2>
       </div>
     );
   }

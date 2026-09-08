@@ -207,6 +207,30 @@ class AgentStateTest(unittest.TestCase):
         browsing["override_seen"] = True
         self.assertEqual(self.agent._intent_mode(browsing), "intent override")
 
+    def test_shopping_intent_switch_preserves_conversation_state(self) -> None:
+        self.agent.respond(
+            "session",
+            "I'm looking for accessories belts, but I'm still exploring.",
+            1,
+            10,
+        )
+        original_messages = list(self.agent._sessions["session"]["messages"])
+        self.agent.respond(
+            "session", "I'm changing my shopping intent to buying.", 2, 10
+        )
+        state = self.agent._sessions["session"]
+        self.assertEqual(state["query_profile"]["intent"], "specific buying")
+        self.assertEqual(state["messages"], original_messages)
+        self.assertFalse(state["override_seen"])
+
+        self.agent.respond(
+            "session", "I'm changing my shopping intent to browsing.", 3, 10
+        )
+        self.assertEqual(
+            self.agent._sessions["session"]["query_profile"]["intent"],
+            "exploratory browsing",
+        )
+
     def test_optional_trace_does_not_change_official_response(self) -> None:
         traced = Agent(self.catalog_path, enable_trace=True)
         try:

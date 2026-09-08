@@ -61,7 +61,7 @@ def create_app(
         await runtime.shutdown()
 
     app = FastAPI(
-        title="TechJam Shopping Agent API",
+        title="Fable7 Shopping Agent API",
         version="1.0.0",
         lifespan=lifespan,
     )

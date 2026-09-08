@@ -9,10 +9,10 @@ export default function Home() {
     <main className="landing-shell">
       <nav className="landing-nav">
         <Link className="brand" href="/">
-          <span className="brand-mark">N</span>
-          <span>Narrow</span>
+          <span className="brand-mark">F7</span>
+          <span>Fable7</span>
         </Link>
-        <span className="nav-note">TechJam shopping intelligence</span>
+        <span className="nav-note">Fable7 · TechJam shopping intelligence</span>
       </nav>
 
       <section className="hero">
@@ -61,4 +61,3 @@ export default function Home() {
     </main>
   );
 }
-

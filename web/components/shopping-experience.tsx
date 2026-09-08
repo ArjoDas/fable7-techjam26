@@ -13,6 +13,12 @@ const WELCOME: Record<DemoMode, string> = {
   internals: "Choose a guided opening below. We'll follow the same request from 50,000 products to the final slate.",
 };
 
+type ShoppingIntent = "browse" | "buy";
+
+function firstOptionForIntent(options: MessageOption[], intent: ShoppingIntent): string {
+  return options.find((option) => option.intent === intent)?.id || options[0]?.id || "";
+}
+
 const sessionBootstraps: Partial<Record<DemoMode, Promise<Awaited<ReturnType<typeof createSession>>>>> = {};
 
 function createSessionDeduped(mode: DemoMode) {
@@ -41,6 +47,7 @@ export function ShoppingExperience({ mode }: { mode: DemoMode }) {
   const [products, setProducts] = useState<ProductCard[]>([]);
   const [options, setOptions] = useState<MessageOption[]>([]);
   const [selectedOption, setSelectedOption] = useState("");
+  const [openingIntent, setOpeningIntent] = useState<ShoppingIntent>("browse");
   const [input, setInput] = useState("");
   const [trace, setTrace] = useState<AgentTrace | null>(null);
   const [status, setStatus] = useState<"starting" | "ready" | "working" | "error">("starting");
@@ -56,7 +63,8 @@ export function ShoppingExperience({ mode }: { mode: DemoMode }) {
       setTurn(session.turn);
       setCatalogSize(session.catalog_size);
       setOptions(session.message_options);
-      setSelectedOption(session.message_options[0]?.id || "");
+      setOpeningIntent("browse");
+      setSelectedOption(firstOptionForIntent(session.message_options, "browse"));
       setMessages([{ id: crypto.randomUUID(), role: "assistant", content: WELCOME[mode] }]);
       setProducts([]);
       setTrace(null);
@@ -78,27 +86,22 @@ export function ShoppingExperience({ mode }: { mode: DemoMode }) {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, status]);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!sessionId || status !== "ready" || turn >= 10) return;
-    const chosen = options.find((option) => option.id === selectedOption);
-    const content = mode === "internals" ? chosen?.message_preview || "" : input.trim();
-    if (!content) return;
-
+  async function runTurn(
+    content: string,
+    body: { message?: string; option_id?: string },
+    nextIntent?: ShoppingIntent,
+  ) {
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content }]);
-    setInput("");
     setStatus("working");
     setError("");
     try {
-      const result = await sendTurn(
-        sessionId,
-        mode === "internals" ? { option_id: selectedOption } : { message: content },
-      );
+      const result = await sendTurn(sessionId, body);
       setTurn(result.turn);
       setProducts(result.recommendations);
       setOptions(result.message_options);
       setSelectedOption(result.message_options[0]?.id || "");
       setTrace(result.trace);
+      if (nextIntent) setOpeningIntent(nextIntent);
       setMessages((current) => [
         ...current,
         { id: crypto.randomUUID(), role: "assistant", content: result.assistant.message },
@@ -109,6 +112,21 @@ export function ShoppingExperience({ mode }: { mode: DemoMode }) {
       setError(message);
       setStatus("error");
     }
+  }
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!sessionId || status !== "ready" || turn >= 10) return;
+    const chosen = options.find((option) => option.id === selectedOption);
+    const content = mode === "internals" ? chosen?.message_preview || "" : input.trim();
+    if (!content) return;
+
+    setInput("");
+    await runTurn(
+      content,
+      mode === "internals" ? { option_id: selectedOption } : { message: content },
+      chosen?.kind === "intent" && chosen.intent ? chosen.intent : undefined,
+    );
   }
 
   async function reset() {
@@ -122,45 +140,72 @@ export function ShoppingExperience({ mode }: { mode: DemoMode }) {
       setProducts([]);
       setTrace(null);
       setOptions(session.message_options);
-      setSelectedOption(session.message_options[0]?.id || "");
+      setOpeningIntent("browse");
+      setSelectedOption(firstOptionForIntent(session.message_options, "browse"));
       setStatus("ready");
     } catch {
       await start();
     }
   }
 
+  async function chooseIntent(intent: ShoppingIntent) {
+    if (status !== "ready" || intent === openingIntent) return;
+    if (turn === 0) {
+      setOpeningIntent(intent);
+      setSelectedOption(firstOptionForIntent(options, intent));
+      return;
+    }
+
+    const intentOption = options.find(
+      (option) => option.kind === "intent" && option.intent === intent,
+    );
+    if (!intentOption) {
+      setError("That intent change is not available for this turn.");
+      return;
+    }
+    await runTurn(
+      intentOption.message_preview,
+      { option_id: intentOption.id },
+      intent,
+    );
+  }
+
   const isInternals = mode === "internals";
   const terminal = turn >= 10;
+  const visibleOptions = isInternals && turn === 0
+    ? options.filter((option) => option.intent === openingIntent)
+    : options;
 
   return (
     <main className={`experience-shell ${isInternals ? "internals-mode" : "demo-mode"}`}>
       <header className="app-header">
-        <Link className="brand" href="/"><span className="brand-mark">N</span><span>Narrow</span></Link>
+        <Link className="brand" href="/"><span className="brand-mark">F7</span><span>Fable7</span></Link>
         <div className="mode-switch" aria-label="Demo mode">
           <Link className={!isInternals ? "active" : ""} href="/demo">Shop</Link>
           <Link className={isInternals ? "active" : ""} href="/internals">Internals</Link>
         </div>
-        <div className="header-actions">
-          <span className="turn-count">Turn {turn}<i />10</span>
-          <button onClick={() => void reset()}>New session</button>
-        </div>
+        <div className="header-spacer" aria-hidden="true" />
       </header>
 
       <section className={isInternals ? "internals-grid" : "demo-grid"}>
         <div className="chat-column">
           <div className="column-title">
             <div><span className="section-label">Conversation</span><h1>{isInternals ? "Guide the agent" : "What are you looking for?"}</h1></div>
-            <span className={`connection-dot ${status}`} />
+            <div className="chat-session-controls">
+              <span className={`connection-dot ${status}`} aria-label={`Service ${status}`} />
+              <span className="turn-count">Turn {turn}<i />10</span>
+              <button type="button" onClick={() => void reset()}>New session</button>
+            </div>
           </div>
           <div className="transcript" ref={transcriptRef}>
             {messages.map((message) => (
               <div className={`message ${message.role}`} key={message.id}>
-                <span>{message.role === "assistant" ? "N" : "You"}</span>
+                <span>{message.role === "assistant" ? "F7" : "You"}</span>
                 <p>{message.content}</p>
               </div>
             ))}
             {status === "working" && (
-              <div className="message assistant working-message"><span>N</span><p>Searching the catalog <i /><i /><i /></p></div>
+              <div className="message assistant working-message"><span>F7</span><p>Searching the catalog <i /><i /><i /></p></div>
             )}
           </div>
 
@@ -176,6 +221,32 @@ export function ShoppingExperience({ mode }: { mode: DemoMode }) {
               <div className="terminal-message"><span>Ten turns complete.</span><button type="button" onClick={() => void reset()}>Start fresh</button></div>
             ) : isInternals ? (
               <>
+                <div className="intent-control">
+                  <div className="intent-heading">
+                    <span>Shopping intent</span>
+                    {turn > 0 && <small>Changing intent uses the next conversation turn</small>}
+                  </div>
+                  <div className="intent-switch" role="group" aria-label="Shopping intent">
+                    <button
+                      type="button"
+                      aria-pressed={openingIntent === "browse"}
+                      className={openingIntent === "browse" ? "active" : ""}
+                      disabled={status !== "ready"}
+                      onClick={() => void chooseIntent("browse")}
+                    >
+                      <strong>Browse</strong><span>Explore and discover</span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={openingIntent === "buy"}
+                      className={openingIntent === "buy" ? "active" : ""}
+                      disabled={status !== "ready"}
+                      onClick={() => void chooseIntent("buy")}
+                    >
+                      <strong>Buy</strong><span>Shop with purpose</span>
+                    </button>
+                  </div>
+                </div>
                 <label htmlFor="guided-message">Choose the next message</label>
                 <select
                   id="guided-message"
@@ -183,13 +254,13 @@ export function ShoppingExperience({ mode }: { mode: DemoMode }) {
                   onChange={(event) => setSelectedOption(event.target.value)}
                   disabled={status !== "ready" || !options.length}
                 >
-                  {options.map((option) => (
+                  {visibleOptions.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.label}{option.estimated_remaining !== null ? ` · ~${option.estimated_remaining} remain` : ""}
                     </option>
                   ))}
                 </select>
-                {selectedOption && <p className="option-preview">{options.find((item) => item.id === selectedOption)?.message_preview}</p>}
+                {selectedOption && <p className="option-preview">{visibleOptions.find((item) => item.id === selectedOption)?.message_preview}</p>}
                 <button className="send-button" disabled={status !== "ready" || !selectedOption}>Run turn <span>→</span></button>
               </>
             ) : (
@@ -223,8 +294,10 @@ export function ShoppingExperience({ mode }: { mode: DemoMode }) {
           <>
             <div className="visual-column">
               <FunnelCanvas trace={trace} />
-              <div className="result-heading"><span className="section-label">Current slate</span><strong>{products.length} selected</strong></div>
-              <ProductGrid products={products} />
+              <div className="recommendations-region">
+                <div className="result-heading"><span className="section-label">Current slate</span><strong>{products.length} selected</strong></div>
+                <ProductGrid products={products} />
+              </div>
             </div>
             <TracePanel trace={trace} />
           </>
