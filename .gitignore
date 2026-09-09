@@ -13,7 +13,6 @@ venv/
 
 # Catalog download; unpack into data/catalog.jsonl
 catalog.jsonl.gz
-data/catalog.jsonl
 data/releases/
 
 # Organizer-only code, private evaluation data, manifests, and build reports.
