@@ -37,14 +37,23 @@ def load_agent(directory):
 class IncrementalIndex:
     def _splice(self, replacement, changed):
         agent = self.agent
+        next_rowid=max(self.rowids.values(),default=0)+1
+        new_rowids={}
         with agent.connection:
             for asin in changed:
                 rowid = self.rowids.get(asin)
                 if rowid is not None:
                     agent.connection.execute('DELETE FROM products WHERE rowid=?', (rowid,))
                 agent.connection.execute('DELETE FROM evidence_values WHERE parent_asin=?', (asin,))
-            agent.connection.executemany('INSERT INTO products VALUES (?,?,?,?,?,?,?,?)', replacement.connection.execute('SELECT * FROM products'))
+            rows=[]
+            for row in replacement.connection.execute('SELECT * FROM products'):
+                rowid=self.rowids.get(row[0])
+                if rowid is None:rowid=next_rowid;next_rowid+=1
+                rows.append((rowid,*row));new_rowids[row[0]]=rowid
+            agent.connection.executemany('INSERT INTO products(rowid,parent_asin,coarse_category,title,categories,features,details,store,description) VALUES (?,?,?,?,?,?,?,?,?)',rows)
             agent.connection.executemany('INSERT INTO evidence_values VALUES (?,?)', replacement.connection.execute('SELECT * FROM evidence_values'))
+        for asin in changed:self.rowids.pop(asin,None)
+        self.rowids.update(new_rowids)
         for field in ('_product_views', '_popularity', '_average_rating'):
             values = getattr(agent, field)
             for asin in changed:
@@ -64,6 +73,7 @@ class IncrementalIndex:
         index.cards.update(replacement._dialogue_index.cards)
         for key, values in replacement._dialogue_index.prefixes.items():
             index.prefixes.setdefault(key, []).extend(values)
+            index.prefixes[key].sort(key=lambda a:self.rowids[a])
         agent._known_categories = {card.category for card in index.cards.values()}
         agent._max_popularity = max(agent._popularity.values(), default=1.0)
         agent._exact_cache.clear()

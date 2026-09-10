@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import json
 import os
 import platform
 import subprocess
@@ -44,7 +43,7 @@ def manifest(config, inputs=()):
         resources = {'physical_cpus': psutil.cpu_count(logical=False), 'ram_gib': psutil.virtual_memory().total / 2**30, 'available_ram_gib': psutil.virtual_memory().available / 2**30, 'cpu_percent_snapshot': psutil.cpu_percent()}
     except ImportError:
         resources = {}
-    model_path=ARTIFACTS/'models/manifest.json'
+    model_path=MODEL_CACHE/'manifest.json'
     model_info=json.loads(model_path.read_text(encoding='utf-8')) if model_path.exists() else {}
     provenance_files=[ARTIFACTS/p for p in ('models/manifest.json','models/fp32_source.json','models/embeddings_manifest.json','router.joblib','sources/catalog_manifest.json')]
     return {

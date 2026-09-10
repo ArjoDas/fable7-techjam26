@@ -41,8 +41,11 @@ class Catalog(IncrementalIndex):
         self.revisions=dict(self.db.execute('SELECT asin,revision FROM products'))
         self.version=self.db.execute('SELECT COALESCE(MAX(version),0) FROM events').fetchone()[0]
         snapshot=self.directory/f'snapshot-{self.version}'
-        if (snapshot/'manifest.json').exists():self.agent=load_agent(snapshot)
-        else:
+        self.agent=None
+        if (snapshot/'manifest.json').exists():
+            try:self.agent=load_agent(snapshot)
+            except (ValueError,OSError):pass # Durable authoritative rows recover an interrupted cache checkpoint.
+        if self.agent is None:
             self.agent=self._build(self.products)
             save_agent(self.agent,snapshot)
         self._prepare()
@@ -65,9 +68,14 @@ class Catalog(IncrementalIndex):
                 if not row['source_url'].startswith('https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/'):
                     raise ValueError('Unapproved product source')
                 expected=normalize(row['raw'],row['source_category'])
+                if row.get('withdraw_fields'):
+                    allowed={'price','features','description','details','categories','store'}
+                    if not set(row['withdraw_fields'])<=allowed:raise ValueError('Unsupported metadata withdrawal')
+                    for field in row['withdraw_fields']:expected[field]=None if field in ('price','store') else {} if field=='details' else []
                 if expected!=row['product']:raise ValueError('Normalized product disagrees with retained source')
                 provenance={k:row[k] for k in ('source_url','source_line','source_record_sha256','source_category')}
                 provenance['raw_canonical_sha256']=digest(row['raw'])
+                provenance['experimental_metadata_withdrawal']=row.get('withdraw_fields',[])
                 self.db.execute('INSERT OR IGNORE INTO registry VALUES (?,?,?)',(expected['parent_asin'],digest(expected),json.dumps(provenance)))
 
     def _validate(self, events):
@@ -82,7 +90,11 @@ class Catalog(IncrementalIndex):
             if op=='upsert':
                 p=copy.deepcopy(event['product'])
                 if p['parent_asin']!=asin:raise ValueError('Product identity mismatch')
-                if not self.db.execute('SELECT 1 FROM registry WHERE asin=? AND digest=?',(asin,digest(p))).fetchone():
+                if 'available' in p and not isinstance(p['available'],bool):raise ValueError('Availability must be boolean')
+                fact_hash=digest({k:v for k,v in p.items() if k!='available'})
+                # Availability is operational state, not a source product fact.
+                hashes=(digest(p),fact_hash,digest({**p,'available':True}))
+                if not self.db.execute('SELECT 1 FROM registry WHERE asin=? AND digest IN (?,?,?)',(asin,*hashes)).fetchone():
                     raise ValueError('Product facts lack registered provenance')
                 changed[asin]=p
             elif op=='delete':changed[asin]=None
@@ -105,7 +117,7 @@ class Catalog(IncrementalIndex):
             if p is None:self.products.pop(a,None)
             else:self.products[a]=p
             self._replace_edges(a,p)
-        self.rowids=dict(self.agent.connection.execute('SELECT parent_asin,rowid FROM products'))
+        if self.technique=='rebuild':self.rowids=dict(self.agent.connection.execute('SELECT parent_asin,rowid FROM products'))
 
     def apply(self, events):
         with self.lock:
@@ -137,7 +149,11 @@ class Catalog(IncrementalIndex):
         with self.lock:
             rows=self.db.execute('SELECT version,events FROM events WHERE version>? ORDER BY version',(self.version,)).fetchall()
             for version,payload in rows:
-                data=json.loads(payload);self._refresh(data['changed']);self.revisions.update(data['revisions']);self.version=version
+                data=json.loads(payload);old=dict(self.products);sessions=self.agent._sessions
+                try:self._refresh(data['changed'])
+                except Exception:
+                    self.agent.connection.close();self.products=old;self.agent=self._build(old);self.agent._sessions=sessions;self._prepare();raise
+                self.revisions.update(data['revisions']);self.version=version
             if minimum_version is not None and self.version<minimum_version:raise RuntimeError('Requested catalog version not yet committed')
             return self.version
 

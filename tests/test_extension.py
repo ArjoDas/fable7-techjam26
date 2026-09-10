@@ -72,4 +72,71 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(self.agent.states['y']['constraints'],[])
 
 
+class BudgetTests(unittest.TestCase):
+    def test_concurrent_reservations_and_unknown_usage(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from extension.providers import Ledger,BudgetExceeded
+        with tempfile.TemporaryDirectory() as folder:
+            ledger=Ledger(Path(folder)/'budget.sqlite')
+            def reserve(i):
+                try:return ledger.reserve('screen','fixture',.3,'public fixture')
+                except BudgetExceeded:return None
+            with ThreadPoolExecutor(max_workers=4) as pool:ids=list(pool.map(reserve,range(20)))
+            self.assertEqual(sum(i is not None for i in ids),6)
+            self.assertLessEqual(ledger.summary()['charged_or_reserved_usd'],2)
+            first=next(i for i in ids if i)
+            ledger.finish(first,'timeout',None,{},1)
+            self.assertAlmostEqual(ledger.summary()['charged_or_reserved_usd'],1.8)
+
+
+class VectorTests(unittest.TestCase):
+    def test_field_delta_and_compaction_do_not_reencode_unchanged(self):
+        import numpy as np
+        from extension.vectors import FieldVectors,VectorIndex,text,text_hash
+        from extension.common import write_json
+        class Encoder:
+            def __init__(self):self.calls=0
+            def encode(self,texts):
+                self.calls+=len(texts);rows=[]
+                for text in texts:
+                    x=np.zeros(384,dtype='float32');x[sum(text.encode())%384]=1;rows.append(x)
+                return np.stack(rows)
+        encoder=Encoder();fields=FieldVectors(encoder);p=product('A')
+        fields.update('A',p);before=encoder.calls;fields.update('A',p);self.assertEqual(encoder.calls,before)
+        changed={**p,'title':'different title'};fields.update('A',changed);self.assertEqual(encoder.calls,before+1)
+        reference=FieldVectors(Encoder());reference.update('A',changed)
+        np.testing.assert_allclose(fields.vector('A'),reference.vector('A'))
+        with tempfile.TemporaryDirectory() as directory:
+            folder=Path(directory);np.save(folder/'base.npy',encoder.encode([text(p)]))
+            write_json(folder/'base.json',{'ids':['A'],'text_hashes':{'A':text_hash(text(p))},'encoder_revision':'fixture'})
+            index=VectorIndex(folder,encoder);before=encoder.calls;index.compact(folder/'compact')
+            self.assertEqual(before,encoder.calls)
+            self.assertEqual(json.loads((folder/'compact/base.json').read_text())['compaction_encoded_texts'],0)
+            index.close()
+
+
 if __name__=='__main__':unittest.main()
+
+class ServingTests(unittest.TestCase):
+    def test_workers_acknowledge_and_revalidate_cached_retry(self):
+        from extension.service import Pool
+        import time
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);path=root/'input.jsonl';write_jsonl(path,[product('A'),product('B','blue')])
+            store=Catalog(root/'store',path);store.close();pool=Pool(2,root/'store',variant='rules')
+            try:
+                deadline=time.monotonic()+30
+                while len(pool.ready)<2 and time.monotonic()<deadline:time.sleep(.05)
+                self.assertEqual(len(pool.ready),2)
+                self.assertEqual(pool.submit({'operation':'reset','session_id':'x','user_profile':{}})['status'],200)
+                request={'operation':'respond','session_id':'x','request_id':'one','turn':1,'top_k':10,'message':'Need a red cotton shirt'}
+                first=pool.submit(request);self.assertEqual(first['status'],200)
+                self.assertEqual(first['result']['recommendations'],[{'parent_asin':'A'}])
+                publication=pool.publish([{'parent_asin':'A','revision':1,'operation':'delete'}])
+                self.assertEqual(publication['result']['worker_acknowledgements'],[1,1])
+                retry=pool.submit(request);self.assertEqual(retry['status'],200)
+                self.assertEqual(retry['result']['recommendations'],[])
+                self.assertEqual(retry['result']['catalog_version'],1)
+                self.assertEqual(pool.submit(dict(request,message='different'))['status'],409)
+                self.assertEqual(pool.submit(dict(request,request_id='two',turn=3))['status'],409)
+            finally:pool.close()

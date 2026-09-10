@@ -19,7 +19,7 @@ class VectorIndex:
         self.meta=json.loads((self.directory/'base.json').read_text(encoding='utf-8'))
         self.ids=self.meta['ids'];self.positions={a:i for i,a in enumerate(self.ids)}
         self.base=np.load(self.directory/'base.npy',mmap_mode='r');self.delta={};self.tombstones=set();self.hashes=dict(self.meta['text_hashes'])
-        self.version=-1;self.query_cache={}
+        self.version=-1;self.query_cache={};self.state_directory=self.directory;self.catalog_identity=None
         pointer=self.directory/'current.json'
         if pointer.exists():
             state=json.loads(pointer.read_text());data=json.loads((self.directory/state['metadata']).read_text())
@@ -33,6 +33,15 @@ class VectorIndex:
         return self.encoder
 
     def sync(self,catalog):
+        identity=str(catalog.directory.resolve())
+        if self.catalog_identity!=identity:
+            self.catalog_identity=identity;self.version=-1;self.delta={};self.tombstones=set();self.hashes=dict(self.meta['text_hashes']);self.query_cache.clear()
+            self.state_directory=catalog.directory/'vector-state-document';self.state_directory.mkdir(parents=True,exist_ok=True)
+            pointer=self.state_directory/'current.json'
+            if pointer.exists():
+                state=json.loads(pointer.read_text());data=json.loads((self.state_directory/state['metadata']).read_text())
+                array=np.load(self.state_directory/state['vectors'])
+                self.delta={a:array[i] for i,a in enumerate(data['ids'])};self.tombstones=set(data['tombstones']);self.hashes=data['hashes'];self.version=data['version']
         if self.version==catalog.version:return
         active={a:p for a,p in catalog.products.items() if p.get('available',True)}
         changed=[a for a,p in active.items() if self.hashes.get(a)!=text_hash(text(p))]
@@ -44,11 +53,11 @@ class VectorIndex:
 
     def persist(self):
         ids=sorted(self.delta);stem=f'delta-{self.version}'
-        temp=self.directory/(stem+'.npy.tmp')
+        temp=self.state_directory/(stem+'.npy.tmp')
         with temp.open('wb') as stream:np.save(stream,np.stack([self.delta[a] for a in ids]) if ids else np.empty((0,self.base.shape[1]),dtype='float32'))
-        temp.replace(self.directory/(stem+'.npy'))
-        write_json(self.directory/(stem+'.json'),{'ids':ids,'tombstones':sorted(self.tombstones),'hashes':self.hashes,'version':self.version})
-        write_json(self.directory/'current.json',{'metadata':stem+'.json','vectors':stem+'.npy'})
+        temp.replace(self.state_directory/(stem+'.npy'))
+        write_json(self.state_directory/(stem+'.json'),{'ids':ids,'tombstones':sorted(self.tombstones),'hashes':self.hashes,'version':self.version})
+        write_json(self.state_directory/'current.json',{'metadata':stem+'.json','vectors':stem+'.npy'})
 
     def search(self,query,k=100,catalog=None):
         if catalog:self.sync(catalog)
@@ -72,6 +81,9 @@ class VectorIndex:
         values=np.stack([self.delta[a] if a in self.delta else self.base[self.positions[a]] for a in ids])
         np.save(destination/'base.npy',values)
         write_json(destination/'base.json',{'ids':ids,'text_hashes':{a:self.hashes[a] for a in ids},'encoder_revision':self.meta['encoder_revision'],'compaction_encoded_texts':0})
+
+    def close(self):
+        if getattr(self.base,'_mmap',None) is not None:self.base._mmap.close()
 
 
 class FieldVectors:

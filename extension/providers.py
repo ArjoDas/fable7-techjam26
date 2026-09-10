@@ -6,6 +6,7 @@ import sqlite3
 import time
 import urllib.request
 import uuid
+from contextlib import contextmanager
 from extension.common import ARTIFACTS, ROOT
 
 MODELS={
@@ -23,13 +24,18 @@ class Ledger:
         self.path=Path(path or ARTIFACTS/'api/ledger.sqlite');self.path.parent.mkdir(parents=True,exist_ok=True)
         with self.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS calls(id TEXT PRIMARY KEY,stage TEXT,provider TEXT,reserved REAL,charged REAL,status TEXT,prompt TEXT,response TEXT,usage TEXT,elapsed REAL)')
+    @contextmanager
     def connect(self):
-        db=sqlite3.connect(self.path,timeout=30);db.execute('PRAGMA journal_mode=WAL');return db
+        db=sqlite3.connect(self.path,timeout=30);db.execute('PRAGMA journal_mode=WAL')
+        try:
+            with db:yield db
+        finally:db.close()
     def reserve(self,stage,provider,maximum,prompt):
         if stage not in ('screen','confirmation','reserve'):raise ValueError('Unknown budget stage')
         cap={'screen':2.,'confirmation':6.,'reserve':2.}[stage]
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
+            if db.execute("SELECT 1 FROM calls WHERE status='cost_bound_violation'").fetchone():raise BudgetExceeded('Paid campaign halted after provider bound violation')
             total=db.execute('SELECT COALESCE(SUM(charged),0) FROM calls').fetchone()[0]
             subtotal=db.execute('SELECT COALESCE(SUM(charged),0) FROM calls WHERE stage=?',(stage,)).fetchone()[0]
             if maximum<0 or total+maximum>10 or subtotal+maximum>cap:raise BudgetExceeded('Campaign or stage budget would be exceeded')
@@ -39,7 +45,9 @@ class Ledger:
     def finish(self,identifier,status,response,usage,elapsed,actual=None):
         with self.connect() as db:
             reserved=db.execute('SELECT reserved FROM calls WHERE id=?',(identifier,)).fetchone()[0]
-            if actual is not None and actual>reserved:raise RuntimeError('Provider charge exceeded token bound; retain reservation and stop paid campaign')
+            if actual is not None and actual>reserved:
+                db.execute("UPDATE calls SET status='cost_bound_violation',charged=? WHERE id=?",(actual,identifier));db.commit()
+                raise RuntimeError('Provider charge exceeded token bound; paid campaign halted')
             db.execute('UPDATE calls SET charged=?,status=?,response=?,usage=?,elapsed=? WHERE id=?',
                        (reserved if actual is None else actual,status,response,json.dumps(usage),elapsed,identifier))
     def summary(self):
@@ -108,7 +116,9 @@ class Matcher:
         except Exception as exc:
             # Unknown completion/transport outcomes keep their full reservation.
             with self.ledger.connect() as db:status=db.execute('SELECT status FROM calls WHERE id=?',(identifier,)).fetchone()[0]
-            if status=='reserved':self.ledger.finish(identifier,type(exc).__name__,None,{},time.perf_counter()-start)
+            if status=='reserved':
+                detail=exc.read().decode('utf-8',errors='replace')[:2000].replace(key,'[REDACTED]') if hasattr(exc,'read') else None
+                self.ledger.finish(identifier,type(exc).__name__+str(getattr(exc,'code','')),detail,{},time.perf_counter()-start)
             raise
     @staticmethod
     def parse(raw):

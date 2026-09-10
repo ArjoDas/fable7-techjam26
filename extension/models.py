@@ -7,8 +7,9 @@ class LocalLLM:
     def __init__(self, url='http://127.0.0.1:8091/v1/chat/completions', timeout=30):
         self.url, self.timeout = url, timeout
 
-    def complete(self, prompt, max_tokens=200, seed=20260910, schema=None):
+    def complete(self, prompt, max_tokens=200, seed=20260910, schema=None, stop=None):
         payload = {'model': 'qwen3-4b', 'messages': [{'role': 'user', 'content': prompt + '\n/no_think'}], 'temperature': 0.3, 'seed': seed, 'max_tokens': max_tokens, 'chat_template_kwargs': {'enable_thinking': False}}
+        if stop:payload['stop']=stop
         if schema is not None:payload['response_format']={'type':'json_schema','json_schema':{'name':'output','strict':True,'schema':schema}}
         request = urllib.request.Request(self.url, json.dumps(payload).encode(), {'Content-Type': 'application/json'})
         with urllib.request.urlopen(request, timeout=self.timeout) as response:

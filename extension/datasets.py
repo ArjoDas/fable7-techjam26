@@ -3,6 +3,7 @@ import argparse
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor,as_completed
 import json
+import hashlib
 from pathlib import Path
 import random
 import re
@@ -83,14 +84,15 @@ def generate_one(row):
         'Preserve numbers, negations, and factual meaning. Do not add prices or guarantees. Style: '+row['style']+'. Evidence: '+json.dumps(card,ensure_ascii=False))
     schema={'type':'object','properties':{'opening':{'type':'string'},'answers':{'type':'array','items':{'type':'string'},'minItems':len(row['facts']),'maxItems':len(row['facts'])}},'required':['opening','answers'],'additionalProperties':False}
     raw='';usage={}
+    generation_config={'seed':SEED+int(hashlib.sha256(row['sample_id'].encode()).hexdigest()[:7],16),'max_tokens':800,'stop':['</think>','</s>'],'schema_version':2}
     try:
-        raw,usage=LocalLLM(timeout=90).complete(prompt,max_tokens=800,seed=SEED+sum(map(ord,row['sample_id'])),schema=schema)
+        raw,usage=LocalLLM(timeout=90).complete(prompt,max_tokens=800,seed=generation_config['seed'],schema=schema,stop=generation_config['stop'])
         parsed=json.loads(raw[raw.find('{'):raw.rfind('}')+1])
         if not isinstance(parsed.get('opening'),str) or not isinstance(parsed.get('answers'),list) or len(parsed['answers'])!=len(row['facts']) or not all(isinstance(a,str) and len(a)>3 for a in parsed['answers']):raise ValueError('Invalid answer bank')
-        return {**row,'opening':parsed['opening'],'answers':parsed['answers'],'generation_prompt':prompt,'generation_raw':raw,'generation_usage':usage,'generator':'Qwen3-4B-Q4_K_M'}
+        return {**row,'opening':parsed['opening'],'answers':parsed['answers'],'generation_config':generation_config,'generation_prompt':prompt,'generation_raw':raw,'generation_usage':usage,'generator':'Qwen3-4B-Q4_K_M'}
     except Exception as exc:
         return {**row,'opening':'I need '+str(row['category_path'][-1])+'. '+row['facts'][0]['value'],
-                'answers':[f['value'] for f in row['facts']],'generation_prompt':prompt,'generation_raw':raw,'generation_usage':usage,
+                'answers':[f['value'] for f in row['facts']],'generation_config':generation_config,'generation_prompt':prompt,'generation_raw':raw,'generation_usage':usage,
                 'generator':'deterministic_fallback','generation_error':type(exc).__name__}
 
 
