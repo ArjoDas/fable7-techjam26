@@ -15,21 +15,21 @@ import uuid
 from extension.common import ARTIFACTS, ROOT
 
 
-def worker(input_queue, output_queue, catalog_path, snapshot, ttl, variant, catalog_updates=False):
+def worker(input_queue, output_queue, catalog_path, snapshot, ttl, variant, catalog_updates=False, worker_id=None):
     from extension.catalog import Catalog
     from extension.agent import Agent
     from extension.vectors import VectorIndex
     started=time.perf_counter()
     store=Catalog(catalog_path)
     from extension.factory import create
-    agent=create(store,variant);vectors=agent.vectors
+    agent=create(store,variant,worker_id=worker_id);vectors=agent.vectors
     seen, touched, sequence = OrderedDict(), {}, {}
     output_queue.put({'ready': True, 'startup_seconds': time.perf_counter() - started})
     while True:
         request = input_queue.get()
         if request is None:
             break
-        began = time.perf_counter()
+        began = time.perf_counter();cached_retry=False
         token = request['token']
         sid = request.get('session_id', '')
         now = time.monotonic()
@@ -63,6 +63,7 @@ def worker(input_queue, output_queue, catalog_path, snapshot, ttl, variant, cata
                 key = (sid, request['request_id'])
                 body_hash = hashlib.sha256(json.dumps({k: request[k] for k in ('turn','message','top_k')}, sort_keys=True).encode()).hexdigest()
                 if key in seen:
+                    cached_retry=True
                     store.sync(request.get('minimum_version'))
                     prior_hash, result = seen[key]
                     status = 200 if prior_hash == body_hash else 409
@@ -73,6 +74,7 @@ def worker(input_queue, output_queue, catalog_path, snapshot, ttl, variant, cata
                 elif request['turn'] != sequence[sid] + 1:
                     result, status = {'error': 'turn_out_of_order'}, 409
                 else:
+                    agent.request_deadline=request['deadline']
                     result = agent.respond(sid, request['message'], request['turn'], request['top_k'])
                     status = 200
                     sequence[sid] = request['turn']
@@ -89,7 +91,7 @@ def worker(input_queue, output_queue, catalog_path, snapshot, ttl, variant, cata
             result, status = {'error': 'invalid_request', 'detail': str(exc)}, 400
         except Exception as exc:
             result, status = {'error': type(exc).__name__, 'detail': str(exc)}, 500
-        output_queue.put({'token': token, 'status': status, 'result': result, 'queue_ms': (began - request['enqueued']) * 1000, 'service_ms': (time.perf_counter() - began) * 1000, 'route_trace':agent.trace.get(sid) if status==200 and request['operation']=='respond' and hasattr(agent,'trace') else None})
+        output_queue.put({'token': token, 'status': status, 'result': result, 'queue_ms': (began - request['enqueued']) * 1000, 'service_ms': (time.perf_counter() - began) * 1000, 'route_trace':({**agent.trace.get(sid,{}),'cache_origin_version':agent.trace.get(sid,{}).get('version'),'version':store.version,'cached_retry':True} if cached_retry else agent.trace.get(sid)) if status==200 and request['operation']=='respond' else None})
     if vectors is not None:vectors.close()
     store.close()
 
@@ -105,9 +107,9 @@ class Pool:
         self.out = mp.Queue()
         self.ready = []
         self.stopping = False
-        for _ in range(count):
+        for worker_id in range(count):
             incoming = mp.Queue(maxsize=capacity)
-            process = mp.Process(target=worker, args=(incoming, self.out, str(catalog), str(snapshot) if snapshot else None, ttl, variant, catalog_updates), daemon=True)
+            process = mp.Process(target=worker, args=(incoming, self.out, str(catalog), str(snapshot) if snapshot else None, ttl, variant, catalog_updates, worker_id), daemon=True)
             process.start()
             self.inputs.append(incoming)
             self.workers.append(process)
@@ -271,6 +273,6 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=int, default=8092)
     parser.add_argument('--workers', type=int, default=1)
     parser.add_argument('--catalog',type=Path,default=ARTIFACTS/'stores/service')
-    parser.add_argument('--variant', choices=['rules','lexical','hybrid','tinybert-lexical','tinybert-100','gated-tinybert'],default='rules')
+    parser.add_argument('--variant', choices=['rules','lexical','hybrid','graph','tinybert','tinybert-lexical','tinybert-100','gated-tinybert','minilm-cross','learned','residual','rag','rag-local','rag-passages','rag-passages-local'],default='rules')
     args = parser.parse_args()
     serve(args.port,args.workers,args.catalog,args.variant)

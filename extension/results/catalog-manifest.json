@@ -1,0 +1,47 @@
+{
+  "manifest": {
+    "seed_default": 20260910,
+    "model_revisions": {},
+    "artifact_provenance_hashes": {},
+    "resources": {
+      "physical_cpus": 16,
+      "ram_gib": 31.519893646240234,
+      "available_ram_gib": 14.04793930053711,
+      "cpu_percent_snapshot": 0.0
+    },
+    "created_utc": "2026-09-10T11:52:26.329219+00:00",
+    "commit": "c9d7da86a41c112c5c59b44277db4189ed12fd9c",
+    "source_hashes": {
+      "extension\\__init__.py": "5159b896c6171143d7485b27873e4247991c7e6b7be26cf004d1895154859aa1",
+      "extension\\common.py": "15916ad6a1cee14f5410d44621384e43662655f1cc1a530e5c3a3d07610fd7f6",
+      "extension\\ingest.py": "492c6a1d9c0b8cc9adbde55ea462d0d7dac645daafe8aec738cc0a0c9179b3e3",
+      "extension\\models.py": "ebb67450a9ec220aebe979b2871b40a67a4accaa143a1016fe80f1fb0740cedd",
+      "extension\\watchdog.py": "da70dfc89f680367fd2f12364adea455b6834837c527baeb090b01aeba107a65",
+      "starter\\__init__.py": "7c597cb17dd97c2246abfa3a369a4c584db881b3c91057cfeac1a4c39cc71a03",
+      "starter\\agent.py": "21b2b3d356f07707f67cb8f3fee45e7b7de8ddf3f295b3e4fd22865a9faad173",
+      "starter\\cp5_dialogue.py": "f489b227634a29a8f75abfecdf531d59cfd4858033b72d738ff4d1d2ed8554e3",
+      "evaluator\\__init__.py": "483a8509b2378bab87ffa1d0ca2c2e418cafd825f871dfa0777c0800be14c174",
+      "evaluator\\local_evaluator.py": "84ea899707452de249ca62abee77c4b40ab7a3139b5cc798ac30c9f521f91b30"
+    },
+    "python": "3.13.1",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "logical_cpus": 22,
+    "config": {
+      "additions": {
+        "Clothing_Shoes_and_Jewelry": 5000,
+        "Electronics": 2500,
+        "Home_and_Kitchen": 2500
+      }
+    },
+    "inputs": {
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\catalog.jsonl": "da979b05a68af864cb0dcf9ee6a81c010c7e66a57978ad286c7a2e005fc69a67",
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\releases\\extension-v1\\sources\\Clothing_Shoes_and_Jewelry.jsonl": "2ddf311de5dd5d5a19ca000f92358d247568c50612796dbe7aa4e4cd48156d7e",
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\releases\\extension-v1\\sources\\Electronics.jsonl": "03dd954d50d082a037026d6da774e5f9fc4921f220504547b7d5c57f201a3556",
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\releases\\extension-v1\\sources\\Home_and_Kitchen.jsonl": "ada8f9b4ec1f73b0b1bad4ec6be8150a52ed3d68e7a19f04929eb8d219b19b78"
+    }
+  },
+  "original_count": 50000,
+  "new_count": 10000,
+  "total": 60000,
+  "fake_products": 0
+}

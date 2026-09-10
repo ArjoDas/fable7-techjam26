@@ -1,0 +1,122 @@
+[
+  {
+    "source": "data\\releases\\extension-v1\\baselines\\cp3-smoke.json",
+    "raw_sha256": "52447c3e3c6ed3a5688c0d9dc567a327f12526c4c2913bfdb7aa694cd8fe0393",
+    "compact": "extension\\results\\baselines-cp3-smoke.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\baselines\\hard_cases_v2.json",
+    "raw_sha256": "a1dfc7801ce58357805bcf8525de9079dcf8d6974d3bd5298f56f0171868f800",
+    "compact": "extension\\results\\baselines-hard_cases_v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\baselines\\public.json",
+    "raw_sha256": "dfecae4f4877e04b4d5e8b581a73057f39ce044450210bc75e1cf1549fd70993",
+    "compact": "extension\\results\\baselines-public.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\baselines\\synthetic_dev.json",
+    "raw_sha256": "54ce0d0f440e51468dbb55b6648583d34fbf8125e6ddf6421727fe36c5d65356",
+    "compact": "extension\\results\\baselines-synthetic_dev.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\baselines\\synthetic_holdout.json",
+    "raw_sha256": "b82d4c38690f38452f42f506b41bab9473bfec56c1c15b2e3f71819777cd64a1",
+    "compact": "extension\\results\\baselines-synthetic_holdout.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\baselines\\synthetic_train.json",
+    "raw_sha256": "07efaece92ca9aac00482b0bbfc7f0caf7d8cce07d4086ca3f223ef5fbebf86e",
+    "compact": "extension\\results\\baselines-synthetic_train.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\catalog\\manifest.json",
+    "raw_sha256": "a6b1fbef2b92fe137ad41a98722a5e4b6340df5def9e57fa2a67ef43c06e0a37",
+    "compact": "extension\\results\\catalog-manifest.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\vectors\\document\\manifest.json",
+    "raw_sha256": "938339b1d90b9e1bb8684ae4668eb55ef687a4b0cccf7a9e3b4168fc76b56acb",
+    "compact": "extension\\results\\vectors-document-manifest.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\updates\\run-1\\result.json",
+    "raw_sha256": "4cae88d1fe91b0e4715d82a1fc7dd4ecb003ef78b91fd27b95e9498a917740c4",
+    "compact": "extension\\results\\updates-run-1-result.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\updates\\run-1\\parity-deterministic.json",
+    "raw_sha256": "a622dddc6c48bc3def4010f2d5f751057788be040b7c747cf710c3da4184f343",
+    "compact": "extension\\results\\updates-run-1-parity-deterministic.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\updates\\batched\\result.json",
+    "raw_sha256": "e5708bb66d91b4933b8b920cc7e601458532ee80eb617e1b468b0953301e5615",
+    "compact": "extension\\results\\updates-batched-result.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\representations\\result.json",
+    "raw_sha256": "171e552e2c6a2ff91316f7b0b89e9e739fcfa9d5a721a8b6d6d935a5d37da3a5",
+    "compact": "extension\\results\\representations-result.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\vectors\\update-probe\\result.json",
+    "raw_sha256": "82c845c22d001302f3e262aaf53c9db94f4fe1bd0948c938597d229712b22c14",
+    "compact": "extension\\results\\vectors-update-probe-result.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\api\\screen-screen-15.0.json",
+    "raw_sha256": "4d0596f7560ec0bc76bf5e3223dbd3f3e3d0ec867ccc5e77e181f6fb2364a7da",
+    "compact": "extension\\results\\api-screen-screen-15.0.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\api\\screen-screen-1.2.json",
+    "raw_sha256": "07c9a6bcd1da4caea3c1ca75c63b695e1a421d884806afb67a5af1bac239642c",
+    "compact": "extension\\results\\api-screen-screen-1.2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-gated-tinybert-natural-interactive-screen-v2.json",
+    "raw_sha256": "200a551d0e5db3d56d0200e2c215d91aaba3d60e5ed83c495d468211d05b7c2b",
+    "compact": "extension\\results\\quality-dev-gated-tinybert-natural-interactive-screen-v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-graph-natural-interactive-screen-v2.json",
+    "raw_sha256": "9b3a549e65eca6ce7e78b30c27ea0b587097f1e8f07ec35d72010107be9e010c",
+    "compact": "extension\\results\\quality-dev-graph-natural-interactive-screen-v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-hybrid-natural-interactive-screen-v2.json",
+    "raw_sha256": "e40329839fe647f5f71b639b84ed19a707943c6cbb15da87404d8b4aac6dccfc",
+    "compact": "extension\\results\\quality-dev-hybrid-natural-interactive-screen-v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-lexical-natural-interactive-screen-v2.json",
+    "raw_sha256": "a42aa8a22dc0a9dcd932da54eb37480c2621b148473a533720d1327776c7c4c2",
+    "compact": "extension\\results\\quality-dev-lexical-natural-interactive-screen-v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-main-natural-interactive-screen-v2.json",
+    "raw_sha256": "ed4454298e46212087af51608a8b9dfabfd09840c352de58e1869f25d0354e0f",
+    "compact": "extension\\results\\quality-dev-main-natural-interactive-screen-v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-rules-natural-interactive-screen-v2.json",
+    "raw_sha256": "a11fe78112d1ece8c0ee9ff20600672745fcd7bfc1e381afcf3ca93dfbac4bf1",
+    "compact": "extension\\results\\quality-dev-rules-natural-interactive-screen-v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-tinybert-100-natural-interactive-screen-v2.json",
+    "raw_sha256": "efd78b20fa433be0633fdbb4a417fe70d4549e1c80ed2f08847db137c18e2e96",
+    "compact": "extension\\results\\quality-dev-tinybert-100-natural-interactive-screen-v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-tinybert-lexical-natural-interactive-screen-v2.json",
+    "raw_sha256": "3aa140e64ca051f4c51abc7884e0136f8b2f8412eb7dac733a2a8894cbb1fc4f",
+    "compact": "extension\\results\\quality-dev-tinybert-lexical-natural-interactive-screen-v2.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-tinybert-natural-interactive-screen-v2.json",
+    "raw_sha256": "bc52925c0e8d9454cb66fbbe24378e0b49442f771162f55c3d8fca8700b0b59f",
+    "compact": "extension\\results\\quality-dev-tinybert-natural-interactive-screen-v2.json"
+  }
+]

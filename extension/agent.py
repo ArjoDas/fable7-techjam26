@@ -90,6 +90,8 @@ class Agent:
             if not possible:return False
             state['possible']=possible;return True
         if turn!=state['turn']+1:return False
+        state['possible']=state.get('possible',set()) & self.category_ids.get(state['category'],set())
+        if not state['possible']:return False
         if EMPTY.fullmatch(text):
             return state['ask'] is not None and bool(re.search(r'for '+re.escape(state['ask'])+r'(?:;|\.)',text))
         if text==GENERIC:return state['ask'] is None
@@ -188,7 +190,7 @@ class Agent:
             state['turn']=turn;state['ask']='other'
             self.trace[sid]={'route':'clarification','version':self._version,'constraints':active,'candidate_ids':[],'model_calls':0,'reason':'contradiction'}
             return {'message':'Those requirements conflict. Which should I keep?','ask_attribute':'other','recommendations':[]}
-        query=' '.join(state['messages']);usage={};fallback=None;route='lexical';calls=0
+        query=state.pop('retrieval_query',' '.join(state['messages']));usage={};fallback=None;route='lexical';calls=0
         base_state=self.base._sessions[sid]
         base_state.update(messages=[query],base_message='',protocol_compatible=False,exploratory=state['mode']=='browsing')
         terms=list(dict.fromkeys(_terms(query)))[:80]
@@ -212,6 +214,8 @@ class Agent:
         confidence=max((len(set(terms)&self.product_tokens[a])/max(1,len(set(terms))) for a in ranked[:5]),default=0)
         if self.model is not None and (confidence<.5 or not state['category_alias']):
             timeout=min(1.2,max(0,1.8-(time.perf_counter()-started)))
+            deadline=getattr(self,'request_deadline',None)
+            if deadline is not None:timeout=min(timeout,max(0,deadline-time.perf_counter()-.2))
             if timeout>.05:
                 try:
                     calls=1;self.model_calls+=1

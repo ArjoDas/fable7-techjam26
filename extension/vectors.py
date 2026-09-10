@@ -14,7 +14,8 @@ def text_hash(value):return hashlib.sha256(value.encode()).hexdigest()
 
 
 class VectorIndex:
-    def __init__(self,directory,encoder=None):
+    def __init__(self,directory,encoder=None,state_name='document'):
+        self.state_name=state_name
         self.directory=Path(directory);self.encoder=encoder;self.encoded_texts=0
         self.meta=json.loads((self.directory/'base.json').read_text(encoding='utf-8'))
         self.ids=self.meta['ids'];self.positions={a:i for i,a in enumerate(self.ids)}
@@ -36,19 +37,30 @@ class VectorIndex:
         identity=str(catalog.directory.resolve())
         if self.catalog_identity!=identity:
             self.catalog_identity=identity;self.version=-1;self.delta={};self.tombstones=set();self.hashes=dict(self.meta['text_hashes']);self.query_cache.clear()
-            self.state_directory=catalog.directory/'vector-state-document';self.state_directory.mkdir(parents=True,exist_ok=True)
+            self.state_directory=catalog.directory/('vector-state-'+self.state_name);self.state_directory.mkdir(parents=True,exist_ok=True)
             pointer=self.state_directory/'current.json'
             if pointer.exists():
                 state=json.loads(pointer.read_text());data=json.loads((self.state_directory/state['metadata']).read_text())
                 array=np.load(self.state_directory/state['vectors'])
                 self.delta={a:array[i] for i,a in enumerate(data['ids'])};self.tombstones=set(data['tombstones']);self.hashes=data['hashes'];self.version=data['version']
         if self.version==catalog.version:return
-        active={a:p for a,p in catalog.products.items() if p.get('available',True)}
-        changed=[a for a,p in active.items() if self.hashes.get(a)!=text_hash(text(p))]
+        if self.version<0:
+            affected=set(catalog.products)|set(self.ids)|set(self.delta)
+        else:
+            affected=set()
+            for payload, in catalog.db.execute('SELECT events FROM events WHERE version>? AND version<=?',(self.version,catalog.version)):
+                affected.update(json.loads(payload)['changed'])
+        changed=[]
+        for a in affected:
+            product=catalog.products.get(a)
+            if product is None or not product.get('available',True):self.tombstones.add(a)
+            else:
+                self.tombstones.discard(a)
+                if self.hashes.get(a)!=text_hash(text(product)):changed.append(a)
         if changed:
-            values=self._encoder().encode([text(active[a]) for a in changed]);self.encoded_texts+=len(changed)
-            for a,v in zip(changed,values):self.delta[a]=v;self.hashes[a]=text_hash(text(active[a]))
-        self.tombstones=(set(self.ids)|set(self.delta))-set(active);self.version=catalog.version
+            values=self._encoder().encode([text(catalog.products[a]) for a in changed]);self.encoded_texts+=len(changed)
+            for a,v in zip(changed,values):self.delta[a]=v;self.hashes[a]=text_hash(text(catalog.products[a]))
+        self.version=catalog.version
         self.query_cache.clear();self.persist()
 
     def persist(self):

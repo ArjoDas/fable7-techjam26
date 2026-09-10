@@ -1,3 +1,4 @@
+from extension.common import dataset_path
 """A small extended-route residual ranker; the base encoder and main weights stay frozen."""
 import argparse
 import joblib
@@ -25,7 +26,7 @@ class Residual:
 def train(limit):
     from extension.evaluate import build
     from extension.datasets import Shopper
-    rows=sorted(read_jsonl(ARTIFACTS/'datasets/train.jsonl'),key=lambda r:r['sample_id'])[:limit]
+    rows=sorted(read_jsonl(dataset_path('train')),key=lambda r:r['sample_id'])[:limit]
     store,agent=build('hybrid');x=[];y=[];source=[]
     for row in rows:
         shopper=Shopper(row);sid=row['sample_id'];agent.reset(sid,{});messages=[]
@@ -41,7 +42,7 @@ def train(limit):
     replay=min(len(x),300);weights=np.ones(len(x));weights[:replay]=2
     model=LogisticRegression(max_iter=500,class_weight='balanced',random_state=20260910).fit(np.asarray(x),y,sample_weight=weights)
     folder=ARTIFACTS/'learned';folder.mkdir(parents=True,exist_ok=True);joblib.dump(model,folder/'residual.joblib')
-    write_json(folder/'residual-training.json',{'manifest':manifest({'limit':limit,'replay_rows':replay},[ARTIFACTS/'datasets/train.jsonl']),
+    write_json(folder/'residual-training.json',{'manifest':manifest({'limit':limit,'replay_rows':replay},[dataset_path('train')]),
         'eligible_tasks':len(source),'candidate_rows':len(x),'sample_ids':source,'base_weights_modified':False,'encoder_weights_modified':False})
     store.close()
 

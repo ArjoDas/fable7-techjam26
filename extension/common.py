@@ -45,7 +45,7 @@ def manifest(config, inputs=()):
         resources = {}
     model_path=MODEL_CACHE/'manifest.json'
     model_info=json.loads(model_path.read_text(encoding='utf-8')) if model_path.exists() else {}
-    provenance_files=[ARTIFACTS/p for p in ('models/manifest.json','models/fp32_source.json','models/embeddings_manifest.json','router.joblib','sources/catalog_manifest.json')]
+    provenance_files=[ROOT/'starter/reranker_weights.json',MODEL_CACHE/'manifest.json',*[ARTIFACTS/p for p in ('models/manifest.json','models/fp32_source.json','models/embeddings_manifest.json','router.joblib','sources/catalog_manifest.json')]]
     return {
         'seed_default':20260910,
         'model_revisions':{k:model_info[k] for k in ('qwen_revision','minilm_revision','llama_tag') if k in model_info},
@@ -72,3 +72,8 @@ def percentile(values, q):
 
 def latency_summary(values):
     return {'count': len(values), **{f'p{q}_ms': percentile(values, q / 100) for q in (50, 95, 99)}, 'tail_under_sampled': len(values) < 10000}
+
+
+def dataset_path(split):
+    canonical=ARTIFACTS/f'datasets/canonical/{split}.jsonl'
+    return canonical if canonical.exists() else ARTIFACTS/f'datasets/{split}.jsonl'

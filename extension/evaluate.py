@@ -1,3 +1,4 @@
+from extension.common import dataset_path
 """Evaluate frozen paired tasks; keep official metrics separate from this benchmark."""
 import argparse
 from collections import defaultdict
@@ -29,7 +30,14 @@ def evaluate(agent,rows,protocol=False,replay=False):
                 # Actual main retrieval pool for diagnostics, never used to change its output.
                 state=agent._sessions[sid];pool=state.get('last_candidates',[])
             recall=recall or row['target'] in pool
-            transcript.append({'turn':turn,'message':message,'response':result,'latency_ms':elapsed,'trace':trace})
+            base=getattr(agent,'base',agent)
+            categories={base._product_views[a][1] for a in recommendations if a in base._product_views}
+            popularity=[base._popularity.get(a,0) for a in recommendations]
+            exposure={'returned':len(recommendations),'distinct_category_texts':len(categories),
+                'low_popularity_fraction':sum(v<=10 for v in popularity)/max(1,len(popularity)),
+                'category_compatible_fraction':sum(a in getattr(agent,'aliases',{}).get(trace.get('category_alias'),set()) for a in recommendations)/max(1,len(recommendations)) if trace.get('category_alias') else None,
+                'active_constraint_satisfaction':sum(agent._allowed(a,trace.get('constraints',[])) for a in recommendations)/max(1,len(recommendations)) if hasattr(agent,'_allowed') else None}
+            transcript.append({'turn':turn,'message':message,'response':result,'latency_ms':elapsed,'trace':trace,'browsing_exposure':exposure})
             eligible=turn>=3 if row['scenario'] in ('partial_override','category_override','browsing_to_buying') else True
             if eligible and row['target'] in recommendations:
                 hit=turn;rr=1/(recommendations.index(row['target'])+1);break
@@ -46,13 +54,14 @@ def aggregate(rows):
     n=len(rows)
     return {'tasks':n,'hit_rate_at_10':sum(r['hit'] for r in rows)/max(1,n),'mrr':sum(r['rr'] for r in rows)/max(1,n),
             'turns_capped_at_6':sum(r['turn_to_hit'] for r in rows)/max(1,n),'recall100_any_turn':sum(r['recall100'] for r in rows)/max(1,n),
+            'clarifications_per_task':sum(bool(t['response'].get('ask_attribute')) and not t['response']['recommendations'] for r in rows for t in r['transcript'])/max(1,n),
             'response_latency':latency_summary([t['latency_ms'] for r in rows for t in r['transcript']])}
 
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--variant',default='rules');p.add_argument('--split',default='dev');p.add_argument('--limit',type=int)
     p.add_argument('--input',type=__import__('pathlib').Path);p.add_argument('--protocol',action='store_true');p.add_argument('--replay',action='store_true');p.add_argument('--label',default='');args=p.parse_args()
-    dataset=args.input or ARTIFACTS/f'datasets/{args.split}.jsonl';rows=sorted(read_jsonl(dataset),key=lambda r:r['sample_id'])
+    dataset=args.input or dataset_path(args.split);rows=sorted(read_jsonl(dataset),key=lambda r:r['sample_id'])
     if args.split=='test' and not (ARTIFACTS/'selection/frozen.json').exists():raise RuntimeError('Freeze finalists before opening sealed test')
     rows=rows[:args.limit] if args.limit else rows
     from extension.common import write_jsonl

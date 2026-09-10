@@ -82,7 +82,7 @@ class Matcher:
         if self.provider=='local':
             from extension.models import LocalLLM
             raw,usage=LocalLLM(timeout=timeout).complete(prompt,max_tokens=256)
-            return self.parse(raw),usage
+            return self.validate(self.parse(raw),cards),usage
         config=MODELS[self.provider];key=credentials().get(config['key'])
         if not key:raise RuntimeError('Missing '+config['key'])
         # UTF-8 bytes plus protocol overhead conservatively bound input tokens;
@@ -112,7 +112,7 @@ class Matcher:
             actual=(usage['prompt_tokens']*config['input']+usage['completion_tokens']*config['output'])/1e6 if native else None
             self.ledger.finish(identifier,'received',raw,usage,time.perf_counter()-start,actual)
             usage['usd']=actual
-            return self.parse(raw),usage
+            return self.validate(self.parse(raw),cards),usage
         except Exception as exc:
             # Unknown completion/transport outcomes keep their full reservation.
             with self.ledger.connect() as db:status=db.execute('SELECT status FROM calls WHERE id=?',(identifier,)).fetchone()[0]
@@ -120,6 +120,14 @@ class Matcher:
                 detail=exc.read().decode('utf-8',errors='replace')[:2000].replace(key,'[REDACTED]') if hasattr(exc,'read') else None
                 self.ledger.finish(identifier,type(exc).__name__+str(getattr(exc,'code','')),detail,{},time.perf_counter()-start)
             raise
+    def validate(self,result,cards):
+        if self.mode=='extraction':
+            if not isinstance(result.get('query'),str) or not 1<=len(result['query'])<=1500:raise ValueError('Malformed extracted query')
+        else:
+            refs=result.get('ranking');allowed={str(c['ref']) for c in cards}
+            if not isinstance(refs,list) or len(refs)>len(cards) or any(str(r) not in allowed for r in refs):raise ValueError('Malformed or invented candidate refs')
+        return result
+
     @staticmethod
     def parse(raw):
         start=raw.find('{');end=raw.rfind('}')

@@ -2,17 +2,18 @@
 from extension.common import ARTIFACTS
 
 
-def create(store,variant):
+def create(store,variant,worker_id=None):
     from extension.agent import Agent
     if variant=='main':return store.agent
-    semantic={'hybrid','tinybert','tinybert-100','minilm-cross','local','learned','residual','centroid','gated-tinybert'}
+    semantic={'hybrid','tinybert','tinybert-100','minilm-cross','local','learned','residual','centroid','gated-tinybert','rag','rag-local'}
     vectors=model=reranker=router=None
     if variant in semantic or variant.startswith('api-'):
         from extension.vectors import VectorIndex
-        vectors=VectorIndex(ARTIFACTS/'vectors/document');vectors.sync(store)
+        vectors=VectorIndex(ARTIFACTS/'vectors/document',state_name='document' if worker_id is None else 'document-worker-'+str(worker_id));vectors.sync(store)
     if variant=='local' or variant.startswith('api-'):
         from extension.providers import Matcher
-        model=Matcher('local' if variant=='local' else variant[4:])
+        provider='local' if variant=='local' else variant[4:].removesuffix('-extraction')
+        model=Matcher(provider,mode='extraction' if variant.endswith('-extraction') else 'ranking')
     if variant in ('tinybert','tinybert-100','tinybert-lexical','gated-tinybert','minilm-cross'):
         from extension.rerankers import CrossEncoder
         reranker=CrossEncoder('minilm' if variant=='minilm-cross' else 'tinybert',limit=100 if variant in ('tinybert-100','tinybert-lexical','gated-tinybert') else 20)
@@ -22,4 +23,12 @@ def create(store,variant):
     if variant=='residual':
         from extension.residual import Residual
         reranker=Residual()
+    if variant in ('rag','rag-local','rag-passages','rag-passages-local'):
+        from extension.rag import RAGAgent
+        from extension.rerankers import CrossEncoder
+        from extension.providers import Matcher
+        if variant.startswith('rag-passages'):
+            from extension.passages import PassageIndex
+            vectors=PassageIndex(store,namespace='default' if worker_id is None else 'worker-'+str(worker_id))
+        return RAGAgent(catalog=store,variant='gated-tinybert',vectors=vectors,reranker=CrossEncoder('tinybert',limit=100),parser=Matcher('local',mode='extraction') if variant.endswith('-local') else None)
     return Agent(catalog=store,variant=variant,vectors=vectors,model=model,reranker=reranker,router=router)

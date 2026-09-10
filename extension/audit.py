@@ -1,3 +1,4 @@
+from extension.common import dataset_path
 """Retained absent-Amazon diagnostics and reproducible generation-defect audit."""
 import argparse
 from collections import Counter,defaultdict
@@ -42,7 +43,7 @@ def diagnostics():
 def audit():
     products={p['parent_asin']:p for p in read_jsonl(ARTIFACTS/'catalog/catalog-60000.jsonl')};all_ids=set();split_ids={};defects=[];counts={};openings=Counter()
     for split in ('train','dev','test'):
-        path=ARTIFACTS/f'datasets/{split}.jsonl';rows=read_jsonl(path);ids={r['target'] for r in rows};split_ids[split]=ids
+        path=dataset_path(split);rows=read_jsonl(path);ids={r['target'] for r in rows};split_ids[split]=ids
         if all_ids&ids:raise RuntimeError('Target split leakage')
         all_ids|=ids;counts[split]=len(rows)
         for row in rows:
@@ -56,7 +57,7 @@ def audit():
             if len(row['answers'])!=len(row['facts']):flags.append('answer_count')
             openings[re.sub(r'\W+',' ',row['opening'].lower())]+=1
             if flags:defects.append({'sample_id':row['sample_id'],'split':split,'flags':flags})
-    dev=read_jsonl(ARTIFACTS/'datasets/dev.jsonl');groups=defaultdict(list)
+    dev=read_jsonl(dataset_path('dev'));groups=defaultdict(list)
     for row in dev:groups[(row['group'],row['scenario'])].append(row)
     rng=random.Random(20260910)
     for group in groups.values():rng.shuffle(group)
@@ -65,7 +66,7 @@ def audit():
         for key in sorted(groups):
             if groups[key] and len(selected)<200:selected.append(groups[key].pop())
     write_jsonl(ARTIFACTS/'datasets/audit-dev-200.jsonl',selected)
-    write_json(ARTIFACTS/'datasets/audit.json',{'manifest':manifest({'seed':20260910},[ARTIFACTS/f'datasets/{s}.jsonl' for s in counts]),'counts':counts,
+    write_json(ARTIFACTS/'datasets/audit.json',{'manifest':manifest({'seed':20260910},[dataset_path(s) for s in counts]),'counts':counts,
         'unique_targets':len(all_ids),'split_disjoint':True,'duplicate_openings':sum(n-1 for n in openings.values() if n>1),'defects':defects,
         'dev_audit_size':len(selected),'review_type':'Automated structural checks; semantic model audit recorded separately, not human validation'})
 

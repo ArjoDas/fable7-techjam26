@@ -115,7 +115,7 @@ class VectorTests(unittest.TestCase):
             index.close()
 
 
-if __name__=='__main__':unittest.main()
+
 
 class ServingTests(unittest.TestCase):
     def test_workers_acknowledge_and_revalidate_cached_retry(self):
@@ -140,3 +140,34 @@ class ServingTests(unittest.TestCase):
                 self.assertEqual(pool.submit(dict(request,message='different'))['status'],409)
                 self.assertEqual(pool.submit(dict(request,request_id='two',turn=3))['status'],409)
             finally:pool.close()
+
+
+class AdditionalSafetyTests(unittest.TestCase):
+    def test_availability_roundtrip_retains_fact_provenance(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'input.jsonl';write_jsonl(path,[product('A'),product('B')]);store=Catalog(Path(folder)/'store',path)
+            try:
+                store.apply([{'parent_asin':'A','revision':1,'operation':'availability','available':False}])
+                store.apply([{'parent_asin':'A','revision':2,'operation':'availability','available':True}])
+                p=store.products['A'];store.apply([{'parent_asin':'A','revision':3,'operation':'delete'}])
+                store.apply([{'parent_asin':'A','revision':4,'operation':'upsert','product':p}])
+                self.assertIn('A',store.agent._product_views)
+            finally:store.close()
+    def test_malformed_model_references_are_rejected(self):
+        from extension.providers import Matcher
+        with tempfile.TemporaryDirectory() as folder:
+            from extension.providers import Ledger
+            matcher=Matcher(ledger=Ledger(Path(folder)/'ledger.sqlite'))
+            with self.assertRaises(ValueError):matcher.validate({'ranking':['invented']},[{'ref':'0'}])
+    def test_protocol_exit_retains_material(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'input.jsonl';write_jsonl(path,[product('A'),product('B','blue')]);agent=Agent(path)
+            try:
+                category=next(iter(agent.category_ids));agent.reset('x',{})
+                agent.respond('x',"I'm looking for "+category+'. A key requirement is: cotton.',1,10)
+                self.assertEqual(agent.trace['x']['route'],'protocol')
+                agent.respond('x','Actually blue please',2,10)
+                self.assertTrue(any(c['value']=='cotton' and not c['replaced'] for c in agent.states['x']['constraints']))
+            finally:agent.base.connection.close()
+
+if __name__=='__main__':unittest.main()

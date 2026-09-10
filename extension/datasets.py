@@ -118,7 +118,9 @@ class Shopper:
     def message(self,turn,asked=None):
         row=self.row
         if self.protocol:
-            if turn==1:return "I'm looking for "+row['coarse_category']+'. A key requirement is: '+row['protocol_card']['hard_constraints'][0]+'.'
+            if turn==1:
+                self.used.add(row['protocol_card']['hard_constraints'][0])
+                return "I'm looking for "+row['coarse_category']+'. A key requirement is: '+row['protocol_card']['hard_constraints'][0]+'.' 
             values=row['protocol_card']['hard_constraints']+row['protocol_card']['soft_preferences']
             candidates=[v for v in values if v not in self.used and (asked in (None,'other') or classify_constraint(v)==asked)]
             chosen=candidates[:2];self.used.update(chosen)
