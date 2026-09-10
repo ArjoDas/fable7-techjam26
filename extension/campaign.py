@@ -20,7 +20,7 @@ def command(module,*args):
 def main():
     while not (ARTIFACTS/'datasets/semantic-audit.json').exists():time.sleep(2)
     command('extension.learned','train');command('extension.learned','score');command('extension.residual','--limit',400)
-    variants=('main','rules','hybrid','graph','tinybert','tinybert-100','tinybert-lexical','gated-tinybert','minilm-cross','learned','residual','rag','rag-passages')
+    variants=('main','rules','hybrid','graph','tinybert','tinybert-100','tinybert-lexical','gated-tinybert','minilm-cross','learned','residual','rag','rag-passages','rag-local','rag-passages-local')
     for variant in variants:
         path=ARTIFACTS/f'quality/dev-{variant}-natural-interactive-canonical-dev.json'
         if not path.exists():command('extension.evaluate','--variant',variant,'--split','dev','--label','canonical-dev')

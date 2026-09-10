@@ -26,6 +26,12 @@ def main():
     lines+=['## Exploratory development screen','', 'Fixed 120-task development subset. Accuracy screens ran alongside other work, so their latency is not production qualification. Early screens also preceded final simulator exposure fixes.','', '| Variant | HitRate@10 | Recall@100, any observed turn |','|---|---:|---:|']
     for p in sorted((ARTIFACTS/'quality').glob('*screen-v2.json')):
         data=read(p);a=data['aggregate'];name=data['manifest']['config']['variant'];lines.append(f"| {name} | {a['hit_rate_at_10']:.2%} | {a['recall100_any_turn']:.2%} |")
+    semantic=list((ARTIFACTS/'quality').glob('*semantic-screen.json'))
+    if semantic:
+        lines+=['','## Semantic preprocessing and request parsing','','Matched 120-task development ablations. Whole-product embeddings versus source-passage embeddings, with and without local Qwen request normalization before retrieval.','', '| Variant | HitRate@10 | Recall@100 | p99 observed, ms |','|---|---:|---:|---:|']
+        for p in sorted(semantic):
+            data=read(p);a=data['aggregate'];name=data['manifest']['config']['variant'];lines.append(f"| {name} | {a['hit_rate_at_10']:.2%} | {a['recall100_any_turn']:.2%} | {a['response_latency']['p99_ms']:.0f} |")
+        lines+=['','These are small offline screens; queueing and production tail qualification remain separate.','']
     api=read(ARTIFACTS/'api/screen-screen-1.2.json')
     if api:
         lines+=['','## API deadline screen','','Twelve requests per available provider/mode; exploratory, not a p99 claim. Unknown timeout charges retain their full budget reservations.','', '| Provider | Task | Calls | Failures |','|---|---|---:|---:|']

@@ -7,6 +7,7 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import multiprocessing as mp
+import os
 from pathlib import Path
 import queue
 import threading
@@ -189,6 +190,8 @@ class Pool:
 
 
 def serve(port, workers, catalog, variant='rules'):
+    # Bound BLAS work per worker before Windows spawns fresh interpreters.
+    os.environ['OPENBLAS_NUM_THREADS']='1';os.environ['MKL_NUM_THREADS']='1';os.environ['OMP_NUM_THREADS']='1'
     from extension.catalog import Catalog
     initialized=Catalog(catalog,ARTIFACTS/'catalog/catalog-60000.jsonl');initialized.checkpoint();initialized.close()
     pool=Pool(workers,catalog,variant=variant,catalog_updates=True)

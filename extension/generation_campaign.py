@@ -13,6 +13,8 @@ def main():
     for split in ('train','dev','test'):generate(split)
     from extension.finalize_datasets import run
     run()
+    from extension.ambiguity import main as ambiguity
+    ambiguity()
     from extension.audit import audit
     audit()
     from extension.semantic_audit import main as semantic_audit

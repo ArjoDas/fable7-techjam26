@@ -65,6 +65,11 @@
   "field_unique_text_encodes": 3301,
   "deletion_encodes": 0,
   "representation_quality": {
+    "field_composition": {
+      "tasks": 100,
+      "hit10": 0.85,
+      "recall100": 0.97
+    },
     "category_statistic": {
       "tasks": 100,
       "hit10": 0.76,
@@ -73,11 +78,6 @@
     "fixed_document": {
       "tasks": 100,
       "hit10": 0.76,
-      "recall100": 0.97
-    },
-    "field_composition": {
-      "tasks": 100,
-      "hit10": 0.85,
       "recall100": 0.97
     }
   },

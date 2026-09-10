@@ -71,10 +71,15 @@ def main():
     try:results=evaluate(agent,rows,args.protocol,args.replay)
     finally:store.close()
     name='-'.join(filter(None,[args.split,args.variant,'protocol' if args.protocol else 'natural','replay' if args.replay else 'interactive',args.label]))
-    groups=defaultdict(list)
-    for row in results:groups['original' if row['group']=='original' else 'new'].append(row)
+    groups=defaultdict(list);scenarios=defaultdict(list);categories=defaultdict(list)
+    ambiguity_path=ARTIFACTS/'datasets/ambiguity.json'
+    ambiguity={r['sample_id']:r for r in json.loads(ambiguity_path.read_text(encoding='utf-8'))['rows']} if ambiguity_path.exists() else {}
+    for row in results:
+        groups['original' if row['group']=='original' else 'new'].append(row)
+        scenarios[row['scenario']].append(row);categories[row['category']].append(row)
     summary={'manifest':manifest({k:str(v) if hasattr(v,'resolve') else v for k,v in vars(args).items()},[frozen_input]),'elapsed_seconds':time.perf_counter()-start,'aggregate':aggregate(results),
-             'by_group':{k:aggregate(v) for k,v in groups.items()},'sessions':results}
+             'by_group':{k:aggregate(v) for k,v in groups.items()},'by_scenario':{k:aggregate(v) for k,v in scenarios.items()},'by_category':{k:aggregate(v) for k,v in categories.items()},
+             'source_identifiable_by_group':{k:aggregate([r for r in v if ambiguity.get(r['sample_id'],{}).get('identifiable_from_full_evidence')]) for k,v in groups.items()},'sessions':results}
     write_json(ARTIFACTS/f'quality/{name}.json',summary);print(name,summary['aggregate'],flush=True)
 
 if __name__=='__main__':main()

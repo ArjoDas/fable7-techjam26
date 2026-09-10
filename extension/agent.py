@@ -128,7 +128,9 @@ class Agent:
         if correction and alias and state['category_alias']:
             full=full or not bool(self.aliases[alias] & self.aliases[state['category_alias']])
         if full:
-            for c in state['constraints']:c['replaced']=True
+            reset_everything=bool(re.search(r'\bforget everything\b',text,re.I))
+            for c in state['constraints']:
+                if reset_everything or c['attribute']!='budget':c['replaced']=True
             state['messages']=[];state['seen'].clear();state['category_alias']=''
         elif correction:
             if re.search(r'replace my initial feature requirement',text,re.I):
@@ -201,7 +203,7 @@ class Agent:
         if self.vectors is not None and (self.variant!='gated-tinybert' or lexical_confidence<.6):
             semantic=self.vectors.search(query,100,self.catalog)
             score=defaultdict(float)
-            for weight,lane in ((2.0 if self.variant=='gated-tinybert' else 1.0,ranked),(1.0,semantic)):
+            for weight,lane in ((2.0 if self.variant in ('gated-tinybert','weighted-rag') else 1.0,ranked),(1.0,semantic)):
                 for i,a in enumerate(lane):score[a]+=weight/(61+i)
             ranked=sorted(score,key=lambda a:(-score[a],a));route='hybrid'
         if self.variant=='graph' and self.catalog:

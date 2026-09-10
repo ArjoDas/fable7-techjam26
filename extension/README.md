@@ -78,3 +78,33 @@ experiments. They do not modify encoder weights or claim neural knowledge
 has been subtracted. Metadata withdrawal and availability changes are
 experimental events, not Amazon history. Synthetic outcomes are not evidence
 of conversion or customer-satisfaction gains.
+
+## Incremental semantic retrieval extension
+
+The additional RAG ablations preserve the protocol bypass and use the same
+fixed pretrained MiniLM encoder. `rag` uses document embeddings; `rag-passages`
+uses up to six source-backed passages per product. Their `-local` variants use
+Qwen to normalize the corrected conversation **before** retrieval, with one
+bounded model call per turn. Both retrieval lanes feed one top-100 product pool
+and TinyBERT reranks that pool. Raw explicit constraints and availability are
+checked independently of the model output.
+
+Passage vectors are keyed by a content hash and retained locally in SQLite.
+Publication events replace only affected product mappings. Unchanged passage
+vectors, including vectors needed after reintroduction, are reused. Repacking
+the search matrix is measured separately from neural encoding work. Passage
+retrieval uses the maximum passage similarity per product; lexical/semantic
+reciprocal-rank fusion weights are fixed at 2:1 for these ablations.
+
+```powershell
+.venv-embed/Scripts/python.exe -m extension.passages --gpu
+venv/Scripts/python.exe -m extension.evaluate --variant rag-passages --split dev
+venv/Scripts/python.exe -m extension.evaluate --variant rag-passages-local --split dev
+```
+
+`extension.rag_campaign` waits for passage preprocessing, runs matched
+120-task development ablations without concurrent generation, then resumes the
+remaining dataset generation, audit and full confirmation campaign. This is a
+local process, not a scheduled automation. Inspect its retained logs under
+`data/releases/extension-v1/rag/`; interrupted or failed stages do not imply
+successful completion.

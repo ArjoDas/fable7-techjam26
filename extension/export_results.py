@@ -11,6 +11,8 @@ def main():
         ARTIFACTS/'api/screen-screen-15.0.json',ARTIFACTS/'api/screen-screen-1.2.json',ARTIFACTS/'datasets/audit.json',ARTIFACTS/'datasets/semantic-audit.json',
         ARTIFACTS/'selection/frozen.json',ARTIFACTS/'selection/sealed-results.json',ARTIFACTS/'load/final-confirmation.json']
     paths+=list((ARTIFACTS/'quality').glob('*screen-v2.json'))
+    paths+=list((ARTIFACTS/'quality').glob('*semantic-screen.json'))
+    paths+=[ARTIFACTS/'vectors/passages/manifest.json']
     for path in paths:
         if not path.exists():continue
         value=json.loads(path.read_text(encoding='utf-8'))

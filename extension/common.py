@@ -46,6 +46,7 @@ def manifest(config, inputs=()):
     model_path=MODEL_CACHE/'manifest.json'
     model_info=json.loads(model_path.read_text(encoding='utf-8')) if model_path.exists() else {}
     provenance_files=[ROOT/'starter/reranker_weights.json',MODEL_CACHE/'manifest.json',*[ARTIFACTS/p for p in ('models/manifest.json','models/fp32_source.json','models/embeddings_manifest.json','router.joblib','sources/catalog_manifest.json')]]
+    provenance_files += [ARTIFACTS/p for p in ('learned/router.joblib','learned/residual.joblib','models/tinybert/manifest.json','models/minilm/manifest.json','vectors/passages/manifest.json')]
     return {
         'seed_default':20260910,
         'model_revisions':{k:model_info[k] for k in ('qwen_revision','minilm_revision','llama_tag') if k in model_info},

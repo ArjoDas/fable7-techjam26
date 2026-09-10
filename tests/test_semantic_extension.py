@@ -31,6 +31,26 @@ class SemanticTests(unittest.TestCase):
                 catalog.apply([{'parent_asin':'fixture-A','revision':2,'operation':'upsert','product':p}]);index.sync(catalog)
                 self.assertEqual(encoder.calls,before);self.assertIn('fixture-A',index.ids)
             finally:index.close();catalog.close()
+    def test_category_switch_preserves_global_budget(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'catalog.jsonl';write_jsonl(path,[product('A','red'),{'parent_asin':'B','title':'wallet','categories':['Accessories','Wallets'],'features':['leather'],'details':{},'price':50}]);agent=RAGAgent(path)
+            try:
+                agent.reset('x',{});agent.respond('x','Need a shirt under $25',1,10)
+                result=agent.respond('x','Switch to wallets',2,10)
+                self.assertTrue(any(c['attribute']=='budget' and c['value']==25 for c in agent.trace['x']['constraints']))
+                self.assertEqual(result['recommendations'],[])
+            finally:agent.base.connection.close()
+    def test_metadata_update_encodes_only_changed_passages(self):
+        from extension.ingest import normalize
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);path=root/'catalog.jsonl';original=product('fixture-A','red');write_jsonl(path,[original,product('fixture-B','blue')]);catalog=Catalog(root/'store',path);encoder=Encoder();index=PassageIndex(catalog,encoder)
+            try:
+                before=encoder.calls;other=index.product_vectors['fixture-B'].copy();changed={**original,'features':['red','cotton','lightweight']}
+                record={'raw':changed,'product':normalize(changed,'Clothing_Shoes_and_Jewelry'),'source_url':'https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/fixture',
+                        'source_category':'Clothing_Shoes_and_Jewelry','source_line':1,'source_record_sha256':'fixture'}
+                catalog.register([record]);catalog.apply([{'parent_asin':'fixture-A','revision':1,'operation':'upsert','product':record['product']}]);index.sync(catalog)
+                self.assertEqual(encoder.calls-before,1);np.testing.assert_array_equal(other,index.product_vectors['fixture-B'])
+            finally:index.close();catalog.close()
     def test_parser_runs_before_retrieval_once_and_protocol_bypasses_it(self):
         class Parser:
             def __init__(self):self.calls=0
