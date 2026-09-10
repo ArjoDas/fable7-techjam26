@@ -156,6 +156,21 @@ class DialogueCardIndex:
             return ()
         return tuple(self.prefixes.get((_normalized(category), *normalized), ()))
 
+    def matching_observed_prefix(
+        self, category: str, constraints: list[str]
+    ) -> tuple[str, ...]:
+        """Auxiliary lookup; mirror the catalog's normalized fragment deduplication.
+
+        The original matching_prefix remains CP6's protected reference lookup.
+        Empty normalized fragments do not provide evidence.
+        """
+        normalized = tuple(dict.fromkeys(
+            value for constraint in constraints if (value := _normalized(constraint))
+        ))
+        if not category or not normalized:
+            return ()
+        return tuple(self.prefixes.get((_normalized(category), *normalized), ()))
+
     def prefix_length(self, parent_asin: str, constraints: list[str]) -> int:
         card = self.cards.get(parent_asin)
         if card is None:

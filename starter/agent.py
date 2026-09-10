@@ -7,6 +7,7 @@ import sqlite3
 from collections import Counter
 from pathlib import Path
 
+from starter.safe_exposure import ExposureHistory, protect_output
 from starter.cp5_dialogue import (
     DialogueCardIndex,
     category_from_message,
@@ -104,7 +105,11 @@ class Agent:
         use_exhaustion_release: bool = False,
         ambiguity_release_turn: int = 10,
         dialogue_rating_weight: float = 0.0,
+        use_safe_refutation: bool = True,
+        use_safe_exhaustion: bool = False,
     ) -> None:
+        self._use_safe_refutation = use_safe_refutation
+        self._use_safe_exhaustion = use_safe_exhaustion
         self.catalog_path = Path(catalog_path)
         self.connection = sqlite3.connect(":memory:")
         self._sessions: dict[str, dict[str, object]] = {}
@@ -284,6 +289,7 @@ class Agent:
 
     def reset(self, session_id: str, user_profile: dict) -> None:
         self._sessions[session_id] = {
+            "safe_exposure": ExposureHistory(),
             "base_message": "",
             "exploratory": False,
             "messages": [],
@@ -755,6 +761,96 @@ class Agent:
         prefix_set = set(prefix_ranked)
         return prefix_ranked + [asin for asin in ranked if asin not in prefix_set]
 
+    def _reference_selection(
+        self, state: dict, ranked: list[str], signature: tuple[str, ...],
+        constraints: list[str], turn: int, top_k: int,
+    ) -> list[str]:
+        """Advance only CP6's hypothetical exposure history, never actual misses."""
+        shown = state["shown"]
+        if (
+            self._use_coverage_rotation
+            and state["last_signature"] == signature
+            and isinstance(shown, set)
+        ):
+            head = ranked[:self._coverage_head]
+            selected = head + [
+                parent_asin for parent_asin in ranked[self._coverage_head:]
+                if parent_asin not in shown
+            ][:max(0, top_k - len(head))]
+            if len(selected) < top_k:
+                selected_set = set(selected)
+                selected.extend(
+                    parent_asin for parent_asin in ranked
+                    if parent_asin not in selected_set
+                )
+                selected = selected[:top_k]
+        else:
+            selected = ranked[:top_k]
+        if (
+            turn == 1
+            and self._opening_output_k < top_k
+            and bool(state.get("protocol_compatible"))
+            and (bool(state.get("exploratory")) or bool(constraints))
+        ):
+            selected = selected[: self._opening_output_k]
+        if (
+            self._ambiguous_output_k < top_k
+            # There is no later clarification opportunity on the final turn,
+            # so expose the full rotated window instead of abstaining again.
+            and turn < self._ambiguity_release_turn
+            and not (
+                self._use_exhaustion_release and bool(state.get("exhausted"))
+            )
+            and bool(state.get("protocol_compatible"))
+            and (
+                int(state.get("last_dialogue_match_count", 0)) > 1
+                or bool(state.get("boundary_seen"))
+            )
+        ):
+            selected = selected[: self._ambiguous_output_k]
+        if isinstance(shown, set):
+            shown.update(selected)
+        state["last_signature"] = signature
+        return selected
+
+    def _future_reference(
+        self, state: dict, ranked: list[str], signature: tuple[str, ...],
+        constraints: list[str], turn: int, top_k: int, current: list[str],
+    ) -> set[str]:
+        """Roll selection forward after explicit exhaustion; ranking stays fixed."""
+        future = set(current)
+        shadow = dict(state)
+        shadow["shown"] = set(state["shown"])
+        for next_turn in range(turn + 1, 11):
+            future.update(self._reference_selection(
+                shadow, ranked, signature, constraints, next_turn, top_k,
+            ))
+        return future
+
+    def _future_singletons(
+        self, state: dict, ranked: list[str], cohort: list[str],
+        signature: tuple[str, ...], constraints: list[str], turn: int,
+        top_k: int, current: list[str], exposure: ExposureHistory,
+    ) -> set[str]:
+        """Also protect hits from the previously accepted singleton-only policy."""
+        shadow = dict(state)
+        shadow["shown"] = set(state["shown"])
+        actual = ExposureHistory(eligible=True, refuted=set(exposure.refuted))
+        future: set[str] = set()
+        reference = current
+        for next_turn in range(turn, 11):
+            if next_turn != turn:
+                reference = self._reference_selection(
+                    shadow, ranked, signature, constraints, next_turn, top_k,
+                )
+            selected = protect_output(
+                reference, ranked, cohort, actual, next_turn, top_k,
+                singleton=True, batching=False, future_reference=set(),
+            )
+            future.update(selected)
+            actual.refuted.update(selected)
+        return future
+
     def respond(
         self,
         session_id: str,
@@ -851,51 +947,37 @@ class Agent:
         ranked = self._dialogue_rerank(ranked, state)
         state["last_ranking"] = ranked
         signature = tuple(unique_terms)
-        shown = state["shown"]
-        if (
-            self._use_coverage_rotation
-            and state["last_signature"] == signature
-            and isinstance(shown, set)
-        ):
-            head = ranked[:self._coverage_head]
-            selected = head + [
-                parent_asin for parent_asin in ranked[self._coverage_head:]
-                if parent_asin not in shown
-            ][:max(0, top_k - len(head))]
-            if len(selected) < top_k:
-                selected_set = set(selected)
-                selected.extend(
-                    parent_asin for parent_asin in ranked
-                    if parent_asin not in selected_set
+        selected = self._reference_selection(
+            state, ranked, signature, constraints, turn, top_k,
+        )
+        state["last_reference_output"] = list(selected)
+        if self._use_safe_refutation or self._use_safe_exhaustion:
+            exposure = state["safe_exposure"]
+            exposure.observe(user_message, turn, state["category_query"] in self._known_categories)
+            if exposure.active:
+                cohort = []
+                if self._dialogue_index is not None:
+                    cohort = sorted(
+                        self._dialogue_index.matching_observed_prefix(
+                            str(state["category_query"]), constraints,
+                        ), key=lambda asin: (-self._popularity.get(asin, 0.0), asin),
+                    )
+                future = set(selected)
+                if self._use_safe_exhaustion and exposure.exhausted and turn < 10:
+                    future = self._future_reference(
+                        state, ranked, signature, constraints, turn, top_k, selected,
+                    )
+                    if self._use_safe_refutation:
+                        future.update(self._future_singletons(
+                            state, ranked, cohort, signature, constraints,
+                            turn, top_k, selected, exposure,
+                        ))
+                selected = protect_output(
+                    selected, ranked, cohort, exposure, turn, top_k,
+                    singleton=self._use_safe_refutation,
+                    batching=self._use_safe_exhaustion, future_reference=future,
                 )
-                selected = selected[:top_k]
-        else:
-            selected = ranked[:top_k]
-        if (
-            turn == 1
-            and self._opening_output_k < top_k
-            and bool(state.get("protocol_compatible"))
-            and (bool(state.get("exploratory")) or bool(constraints))
-        ):
-            selected = selected[: self._opening_output_k]
-        if (
-            self._ambiguous_output_k < top_k
-            # There is no later clarification opportunity on the final turn,
-            # so expose the full rotated window instead of abstaining again.
-            and turn < self._ambiguity_release_turn
-            and not (
-                self._use_exhaustion_release and bool(state.get("exhausted"))
-            )
-            and bool(state.get("protocol_compatible"))
-            and (
-                int(state.get("last_dialogue_match_count", 0)) > 1
-                or bool(state.get("boundary_seen"))
-            )
-        ):
-            selected = selected[: self._ambiguous_output_k]
-        if isinstance(shown, set):
-            shown.update(selected)
-        state["last_signature"] = signature
+            exposure.pending = tuple(selected) if exposure.active else ()
         recommendations = [
             {"parent_asin": parent_asin} for parent_asin in selected
         ]
