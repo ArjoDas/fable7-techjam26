@@ -4,6 +4,17 @@ from extension.common import ARTIFACTS
 
 def create(store,variant,worker_id=None):
     from extension.agent import Agent
+    if variant.startswith('matrix-'):
+        if variant=='matrix-semantic':return create(store,'rag-passages-corrected',worker_id)
+        import json
+        from extension.matrix.translate import TranslatedAgent
+        from extension.matrix.common import HOME
+        selection=HOME/'selection.json';threshold=json.loads(selection.read_text(encoding='utf-8'))['threshold'] if selection.exists() else .65
+        vectors=None
+        if variant=='matrix-qwen':
+            from extension.passages import PassageIndex
+            vectors=PassageIndex(store,namespace='matrix' if worker_id is None else 'matrix-worker-'+str(worker_id))
+        return TranslatedAgent(store,variant.removeprefix('matrix-'),vectors,threshold)
     if variant=='main':return store.agent
     semantic={'hybrid','tinybert','tinybert-100','minilm-cross','local','learned','residual','centroid','gated-tinybert','rag','rag-local'}
     vectors=model=reranker=router=None

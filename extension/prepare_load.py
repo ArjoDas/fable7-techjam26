@@ -6,6 +6,9 @@ from extension.datasets import Shopper
 
 
 def main(variant,limit):
+    if variant.startswith('matrix-'):
+        from extension.matrix.load_campaign import prepare
+        return prepare(variant,limit)
     store,agent=build(variant);rows=sorted(read_jsonl(dataset_path('dev')),key=lambda r:r['sample_id'])[:limit];workload=[]
     for row in rows:
         for protocol in (False,True):

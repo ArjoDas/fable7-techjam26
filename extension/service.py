@@ -46,6 +46,7 @@ def worker(input_queue, output_queue, catalog_path, snapshot, ttl, variant, cata
             elif request['operation'] == 'sync':
                 store.sync(request['minimum_version'])
                 if vectors is not None:vectors.sync(store)
+                if hasattr(agent,'sync_catalog'):agent.sync_catalog()
                 result,status={'catalog_version':store.version},200
             elif request['operation'] == 'reset':
                 agent.reset(sid, request.get('user_profile', {}))
@@ -276,6 +277,6 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=int, default=8092)
     parser.add_argument('--workers', type=int, default=1)
     parser.add_argument('--catalog',type=Path,default=ARTIFACTS/'stores/service')
-    parser.add_argument('--variant', choices=['rules','lexical','hybrid','graph','tinybert','tinybert-lexical','tinybert-100','gated-tinybert','minilm-cross','learned','residual','rag','rag-local','rag-passages','rag-passages-local','corrected-lexical','rag-passages-corrected','rag-passages-local-corrected'],default='rules')
+    parser.add_argument('--variant', choices=['rules','lexical','hybrid','graph','tinybert','tinybert-lexical','tinybert-100','gated-tinybert','minilm-cross','learned','residual','rag','rag-local','rag-passages','rag-passages-local','corrected-lexical','rag-passages-corrected','rag-passages-local-corrected','matrix-rules','matrix-qwen','matrix-semantic'],default='rules')
     args = parser.parse_args()
     serve(args.port,args.workers,args.catalog,args.variant)

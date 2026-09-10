@@ -34,14 +34,15 @@ def key(text):return hashlib.sha256(text.encode()).hexdigest()
 
 
 class PassageIndex:
-    def __init__(self,catalog,encoder=None,namespace='default'):
+    def __init__(self,catalog,encoder=None,namespace='default',use_base_cache=True,defer_sync=False):
         from extension.models import Embeddings
         self.catalog=catalog;self.encoder=encoder;self.version=-1;self.encoded_texts=0;self.cache={}
         folder=catalog.directory/('passages-'+namespace);folder.mkdir(parents=True,exist_ok=True)
         self.db=sqlite3.connect(folder/'vectors.sqlite');self.db.execute('CREATE TABLE IF NOT EXISTS vectors(hash TEXT PRIMARY KEY,vector BLOB NOT NULL)')
         base=ARTIFACTS/'vectors/passages/cache.sqlite'
-        self.base=sqlite3.connect(f'file:{base.as_posix()}?mode=ro',uri=True) if base.exists() else None
-        self.product_vectors={};self.product_hashes={};self.delta={};self.sync(catalog)
+        self.base=sqlite3.connect(f'file:{base.as_posix()}?mode=ro',uri=True) if use_base_cache and base.exists() else None
+        self.product_vectors={};self.product_hashes={};self.delta={}
+        if not defer_sync:self.sync(catalog)
     def _encode(self,texts):
         if self.encoder is None:
             from extension.models import Embeddings

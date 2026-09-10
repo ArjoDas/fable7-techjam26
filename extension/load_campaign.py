@@ -24,13 +24,17 @@ def stop(process):
 def assert_idle():
     for p in psutil.process_iter(['cmdline']):
         cmd=p.info['cmdline'] or []
-        if any(module in cmd for module in ('extension.datasets','extension.generation_campaign','extension.semantic_audit','extension.quality_campaign','extension.representation_benchmark','extension.lightrag_benchmark')):
+        if any(module in cmd for module in ('extension.datasets','extension.generation_campaign','extension.semantic_audit','extension.quality_campaign','extension.representation_benchmark','extension.lightrag_benchmark','extension.matrix.bank','extension.matrix.audit','extension.matrix.embedding_work','extension.matrix.evaluate')):
             raise RuntimeError('Stop generation, quality and preprocessing before isolated load: '+str(p.pid))
 
 
 def server(workers,variant):
     folder=ARTIFACTS/'load';folder.mkdir(parents=True,exist_ok=True);log=(folder/f'server-{workers}-{variant}.log').open('a',encoding='utf-8')
-    process=subprocess.Popen([sys.executable,'-u','-m','extension.service','--workers',str(workers),'--variant',variant],stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+    command=[sys.executable,'-u','-m','extension.service','--workers',str(workers),'--variant',variant]
+    if variant.startswith('matrix-'):
+        from extension.matrix.common import HOME
+        command+=['--catalog',str(HOME/'serving-store')]
+    process=subprocess.Popen(command,stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
     deadline=time.monotonic()+240
     while time.monotonic()<deadline:
         if process.poll() is not None:log.close();raise RuntimeError('Server startup failed')
@@ -51,15 +55,17 @@ def measurement(workers,users,rate,requests,duration,name,variant):
 def run(variant,confirm):
     assert_idle();folder=ARTIFACTS/'load';screens=[]
     subprocess.run([sys.executable,'-m','extension.prepare_load','--variant',variant,'--limit','50'],check=True)
+    per_worker_bytes=1.8*2**30
     for workers in (1,4,8):
         available=psutil.virtual_memory().available
-        if available<workers*1.8*2**30:
-            screens.append({'workers':workers,'outcome':'infeasible','reason':'Conservative measured-process memory budget','available_bytes':available});continue
+        if available<workers*per_worker_bytes+2*2**30:
+            screens.append({'workers':workers,'outcome':'infeasible','reason':'Memory budget with 2 GiB headroom; updated from completed smaller-worker screens','per_worker_budget_bytes':per_worker_bytes,'available_bytes':available});continue
         process,log=server(workers,variant)
         try:
             for users in (1,5,10):
                 name=f'screen-{variant}-w{workers}-u{users}'
                 result=measurement(workers,users,5,300,0,name,variant);screens.append({'workers':workers,'users':users,'summary':result})
+                per_worker_bytes=max(per_worker_bytes,1.15*result['peak_service_rss_bytes']/workers)
                 write_json(folder/'screen-matrix.json',screens)
         finally:stop(process);log.close()
     successful=[s for s in screens if s.get('summary',{}).get('gate_2s')]
