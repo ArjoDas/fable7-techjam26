@@ -33,14 +33,14 @@ export function IntentStage({ trace }: { trace: AgentTrace }) {
           <span className="badge info">intent switched this turn</span>
         )}
         {trace.conversation.override_seen && (
-          <span className="badge warn">override — earlier preference dropped</span>
+          <span className="badge warn">override: earlier preference dropped</span>
         )}
         {trace.conversation.boundary_seen && (
-          <span className="badge warn">boundary — user deferred a choice</span>
+          <span className="badge warn">boundary: user deferred a choice</span>
         )}
         {overloaded && (
           <span className="badge warn">
-            intent overload — {matches} products still match every clue
+            intent overload: {matches} products still match every clue
           </span>
         )}
         {matches === 1 && (

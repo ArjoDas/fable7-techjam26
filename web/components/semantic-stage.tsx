@@ -80,7 +80,7 @@ export function SemanticStage({
           <div className="column-title">
             {usedCanonical
               ? "Structured message handed to the agent"
-              : "No confident match — raw text goes to the lexical funnel"}
+              : "No confident match, so the raw text goes to the lexical funnel"}
           </div>
           <p className="canonical-message">
             <AnnotatedMessage
@@ -92,8 +92,8 @@ export function SemanticStage({
       </div>
       <div className="semantic-note">
         {semantic.encoder_used
-          ? "similarity = lexical overlap blended with MiniLM cosine (local ONNX encoder)"
-          : `lexical overlap only — encoder unavailable${
+          ? "similarity = lexical overlap blended with MiniLM cosine similarity"
+          : `lexical overlap only; encoder unavailable${
               semantic.encoder_error ? ` (${semantic.encoder_error})` : ""
             }`}
         {semantic.browsing && " · browsing tone detected"}

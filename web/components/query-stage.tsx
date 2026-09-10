@@ -59,7 +59,7 @@ export function QueryStage({ trace }: { trace: AgentTrace }) {
       {isTranslated ? (
         <div className="annotation-legend">
           <span className="legend-item">
-            Free text — matched against the catalog vocabulary in the next step
+            Free text. The next step matches it against the catalog vocabulary.
           </span>
         </div>
       ) : (

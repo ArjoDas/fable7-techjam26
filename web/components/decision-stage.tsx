@@ -48,7 +48,7 @@ export function DecisionStage({
       {trace.selection.decision === "rotation" &&
         trace.selection.rotation_skipped.length > 0 && (
           <div>
-            <div className="control-label">already shown — skipped</div>
+            <div className="control-label">already shown, skipped this turn</div>
             <div className="rotation-skipped">
               {trace.selection.rotation_skipped.slice(0, 10).map((asin) => (
                 <span key={asin} className="skipped-chip">

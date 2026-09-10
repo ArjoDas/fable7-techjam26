@@ -242,6 +242,9 @@ export function PipelineExplorer() {
       if (nextMode === "structured" && selectedId === FREE_ID) {
         setSelectedId(examples[0]?.id ?? "");
       }
+      if (nextMode === "natural") {
+        setSelectedId(FREE_ID);
+      }
     },
     [examples, mode, resetRun, selectedId],
   );
@@ -277,27 +280,12 @@ export function PipelineExplorer() {
     target && activeTrace ? targetRanks(activeTrace, target.asin) : null;
 
   // ── render ───────────────────────────────────────────────
-  if (ready !== "ready") {
-    return (
-      <div className="boot-panel">
-        <div className="boot-title">
-          {ready === "error"
-            ? "The agent failed to start"
-            : "Indexing 50,000 products"}
-        </div>
-        <div className="boot-note">
-          {ready === "error"
-            ? "Check the API logs and reload."
-            : "SQLite FTS5 + exact-evidence + dialogue-prefix indexes are being built…"}
-        </div>
-        {ready !== "error" && <div className="dot-field" />}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="controls">
+  const header = (
+    <>
+      <div className="headline-row">
+        <h1 className="headline">
+          From prompt to results, <em>one decision at a time</em>
+        </h1>
         <div className="mode-toggle" role="tablist" aria-label="Query mode">
           <button
             role="tab"
@@ -316,64 +304,102 @@ export function PipelineExplorer() {
             Natural language
           </button>
         </div>
-        <div className="control-field">
-          <label className="control-label" htmlFor="example-select">
-            {mode === "structured"
-              ? "Structured example session"
-              : "Natural-language example — or type freely"}
-          </label>
-          <select
-            id="example-select"
-            value={selectedId}
-            onChange={(event) => {
-              setSelectedId(event.target.value);
-              resetRun();
-            }}
+      </div>
+      <p className="subhead">
+        {mode === "structured"
+          ? "Pick a scripted session and watch the agent work: it reads the query, decides buying or browsing, retrieves candidates through exact-evidence and BM25 lanes, reranks the pool, checks the evidence-prefix index, then shows ten products, abstains with one, or rotates to unseen items."
+          : "Type anything, or pick an example. Free text passes through one extra step: the closest semantic match maps your words onto the catalog's known categories and keywords before retrieval begins."}
+      </p>
+    </>
+  );
+
+  if (ready !== "ready") {
+    return (
+      <div>
+        {header}
+        <div className="boot-panel">
+          <div className="boot-title">
+            {ready === "error"
+              ? "The agent failed to start"
+              : "Indexing 50,000 products"}
+          </div>
+          <div className="boot-note">
+            {ready === "error"
+              ? "Check the API logs and reload."
+              : "Building the full-text, exact-evidence, and dialogue-prefix indexes. This takes about forty seconds."}
+          </div>
+          {ready !== "error" && <div className="dot-field" />}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {header}
+      <div className="controls">
+        <div className="controls-row">
+          <div className="control-field">
+            <label className="control-label" htmlFor="example-select">
+              {mode === "structured"
+                ? "Example session (target known)"
+                : "Query"}
+            </label>
+            <select
+              id="example-select"
+              value={selectedId}
+              onChange={(event) => {
+                setSelectedId(event.target.value);
+                resetRun();
+              }}
+            >
+              {mode === "natural" && (
+                <option value={FREE_ID}>Type your own query</option>
+              )}
+              {examples.map((example) => (
+                <option key={example.id} value={example.id}>
+                  {example.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            className="run-button"
+            onClick={run ? resetRun : beginRun}
+            disabled={sending}
           >
-            {examples.map((example) => (
-              <option key={example.id} value={example.id}>
-                {example.label}
-              </option>
-            ))}
-            {mode === "natural" && (
-              <option value={FREE_ID}>Type freely (no known target)</option>
+            {sending && !run ? (
+              <>
+                <span className="spinner-inline" />
+                running
+              </>
+            ) : run ? (
+              "New run"
+            ) : (
+              "Run"
             )}
-          </select>
+          </button>
         </div>
         {isFree && !run && (
-          <div className="control-field">
-            <label className="control-label" htmlFor="free-first">
-              Your first message
-            </label>
-            <input
-              id="free-first"
-              type="text"
-              value={freeText}
-              maxLength={400}
-              placeholder="e.g. I need a durable leather belt for jeans"
-              onChange={(event) => setFreeText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") beginRun();
-              }}
-            />
+          <div className="controls-row">
+            <div className="control-field">
+              <label className="control-label" htmlFor="free-first">
+                Your first message
+              </label>
+              <input
+                id="free-first"
+                type="text"
+                value={freeText}
+                maxLength={400}
+                placeholder="e.g. I need a durable leather belt for jeans"
+                onChange={(event) => setFreeText(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") beginRun();
+                }}
+              />
+            </div>
           </div>
         )}
-        <button
-          className="run-button"
-          onClick={run ? resetRun : beginRun}
-          disabled={sending}
-        >
-          {sending && !run ? (
-            <>
-              <span className="spinner-inline" />
-              running
-            </>
-          ) : run ? (
-            "New run"
-          ) : (
-            "Run"
-          )}
-        </button>
         {error && <div className="status-line error">{error}</div>}
         {!run && selectedExample && !isFree && (
           <div className="status-line">
@@ -409,7 +435,7 @@ export function PipelineExplorer() {
                   className={`rank-pill ${entry.rank === 1 ? "hit" : ""}`}
                 >
                   {entry.label}:{" "}
-                  <strong>{entry.rank === null ? "–" : `#${entry.rank}`}</strong>
+                  <strong>{entry.rank === null ? "out" : `#${entry.rank}`}</strong>
                 </span>
               ))}
             </span>
@@ -464,7 +490,7 @@ export function PipelineExplorer() {
                 type="text"
                 value={freeText}
                 maxLength={400}
-                placeholder="Add another requirement, or repeat yourself to see rotation…"
+                placeholder="Add another requirement, or repeat the same one to trigger rotation"
                 onChange={(event) => setFreeText(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") nextTurn();
@@ -475,7 +501,7 @@ export function PipelineExplorer() {
                 onClick={nextTurn}
                 disabled={sending}
               >
-                {sending ? "…" : "Send"}
+                {sending ? "Sending" : "Send"}
               </button>
             </div>
           )}
@@ -584,10 +610,13 @@ export function PipelineExplorer() {
 
       {!run && (
         <div className="boot-panel">
-          <div className="boot-title">Pick an example and press Run</div>
+          <div className="boot-title">
+            {isFree ? "Type a query and press Run" : "Pick an example and press Run"}
+          </div>
           <div className="boot-note">
-            Structured examples follow the evaluator&rsquo;s protocol; natural
-            language adds a semantic-matching step — or type your own query.
+            {mode === "structured"
+              ? "Each example scripts a full conversation toward a known target product, so you can watch it climb to rank 1."
+              : "Your words are matched to the closest catalog vocabulary before retrieval. Examples with known targets are also available in the dropdown."}
           </div>
           <div className="dot-field" />
         </div>

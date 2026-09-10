@@ -1,8 +1,15 @@
 import { PipelineExplorer } from "@/components/pipeline-explorer";
 
+const GITHUB_URL =
+  "https://github.com/SrivathsanRam/tiktok-techjam-conversational-search";
+const DEVPOST_URL = "https://devpost.com/software/fable7";
+
 export default function Home() {
   return (
     <div className="shell">
+      <div className="event-strip">
+        TikTok TechJam 2026 · Conversational search track
+      </div>
       <header className="masthead">
         <div className="masthead-brand">
           <div className="brand-mark" aria-hidden>
@@ -16,27 +23,31 @@ export default function Home() {
             Fable<em>7</em>
           </div>
         </div>
-        <div className="masthead-note">
-          TikTok TechJam 2026 · Conversational search track
-        </div>
+        <nav className="masthead-links">
+          <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+          <a href={DEVPOST_URL} target="_blank" rel="noreferrer">
+            Devpost
+          </a>
+        </nav>
       </header>
-
-      <h1 className="headline">
-        From prompt to results, <em>one decision at a time</em>
-      </h1>
-      <p className="subhead">
-        Watch the agent turn a shopping message into recommendations: it reads
-        the query, decides buying vs browsing, retrieves candidates through
-        exact-evidence and BM25 lanes fused with reciprocal-rank fusion,
-        reranks the pool, and then chooses whether to show ten products,
-        abstain with one, or rotate to unseen items.
-      </p>
 
       <PipelineExplorer />
 
-      <footer className="footer-note">
-        Python standard library + SQLite FTS5 · Local MiniLM for semantic
-        matching · No cloud APIs
+      <footer className="site-footer">
+        <span className="footer-names">
+          Srivathsan Ram · Arjo Das · Jun Wen Mok
+        </span>
+        <span className="footer-links">
+          <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+          <a href={DEVPOST_URL} target="_blank" rel="noreferrer">
+            Devpost
+          </a>
+        </span>
+        <span className="footer-copyright">© 2026 Fable7</span>
       </footer>
     </div>
   );

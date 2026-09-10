@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Fable7 — From prompt to results",
+  title: "Fable7 · From prompt to results",
   description:
     "An animated walkthrough of how the Fable7 conversational shopping agent turns a query into ranked recommendations.",
 };

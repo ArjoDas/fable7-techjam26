@@ -87,7 +87,7 @@ export function RerankStage({
         <span className="fill" />
       </span>
       <span className="rerank-score">
-        {phase === "merged" ? "—" : (scores.get(asin) ?? 0).toFixed(3)}
+        {phase === "merged" ? "" : (scores.get(asin) ?? 0).toFixed(3)}
       </span>
     </div>
   );
@@ -115,7 +115,7 @@ export function RerankStage({
       <p className="rerank-note">
         {phase === "merged"
           ? "Retrieval order: exact-evidence hits first, then the fused BM25 pool."
-          : "A 16-feature linear model (coverage, constraints, popularity, exact-evidence rarity…) rescores all candidates. Watch the rows trade places."}
+          : "A 16-feature linear model covering coverage, constraints, popularity, and exact-evidence rarity rescores all candidates. Watch the rows trade places."}
       </p>
     </div>
   );

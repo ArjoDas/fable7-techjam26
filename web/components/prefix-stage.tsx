@@ -81,8 +81,8 @@ export function PrefixStage({
         {!hasKey && (
           <span className="prefix-crumb empty">
             {prefix.category
-              ? "no clues disclosed yet — lookup needs at least one"
-              : "no category parsed — lookup unavailable"}
+              ? "no clues disclosed yet; the lookup needs at least one"
+              : "no category parsed; lookup unavailable"}
           </span>
         )}
       </div>
@@ -113,7 +113,7 @@ export function PrefixStage({
               </span>
               <p className="rerank-note" style={{ marginTop: 10 }}>
                 Prefix matches are looked up across the <strong>whole
-                catalog</strong> — not just the 80-candidate pool — ordered by
+                catalog</strong>, not just the 80-candidate pool, ordered by
                 popularity, and promoted above the learned ranking.
                 {prefix.match_count === 1 &&
                   " A unique match means the agent can commit."}
