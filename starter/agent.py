@@ -134,6 +134,8 @@ class Agent:
         self._ambiguity_release_turn = ambiguity_release_turn
         self._dialogue_rating_weight = dialogue_rating_weight
         self._enable_trace = enable_trace
+        self._last_route_trace: dict[str, object] | None = None
+        self._last_rerank_scores: dict[str, float] = {}
         self._exact_cache: dict[str, tuple[str, ...]] = {}
         self._exact_membership_cache: dict[str, frozenset[str]] = {}
         self._build_index()
@@ -367,30 +369,40 @@ class Agent:
         # route therefore supplies precision, while phrase and disjunctive routes
         # retain recall when free-form wording is less exact.
         expressions = [
-            (" AND ".join(quoted), 2.5),
+            ("conjunctive", " AND ".join(quoted), 2.5),
             (
+                "phrase",
                 " OR ".join(
                     f'"{terms[index]} {terms[index + 1]}"'
                     for index in range(len(terms) - 1)
                 ),
                 1.25,
             ),
-            (" OR ".join(quoted), disjunctive_weight),
+            ("disjunctive", " OR ".join(quoted), disjunctive_weight),
         ]
         scores: dict[str, float] = {}
         best_route_rank: dict[str, int] = {}
-        for expression, weight in expressions:
+        route_trace: list[dict[str, object]] | None = [] if self._enable_trace else None
+        for route_name, expression, weight in expressions:
             if not expression:
                 continue
-            for rank, parent_asin in enumerate(
-                self._ranked_asins(expression, route_limit, category), start=1
-            ):
+            route_asins = self._ranked_asins(expression, route_limit, category)
+            for rank, parent_asin in enumerate(route_asins, start=1):
                 scores[parent_asin] = scores.get(parent_asin, 0.0) + weight / (20.0 + rank)
                 best_route_rank[parent_asin] = min(best_route_rank.get(parent_asin, rank), rank)
+            if route_trace is not None:
+                route_trace.append(
+                    {
+                        "name": route_name,
+                        "weight": weight,
+                        "count": len(route_asins),
+                        "asins": route_asins[:80],
+                    }
+                )
         # Fail open only when the complete category-scoped retrieval is empty;
         # never mix a global route into an otherwise valid exact category pool.
         if category and not scores:
-            return self._fused_search(
+            result = self._fused_search(
                 terms,
                 top_k,
                 disjunctive_weight=disjunctive_weight,
@@ -398,6 +410,9 @@ class Agent:
                 route_limit=route_limit,
                 category=None,
             )
+            if self._enable_trace and isinstance(self._last_route_trace, dict):
+                self._last_route_trace["category_dropped"] = True
+            return result
         if popularity_weight > 0.0:
             popularity_ranking = sorted(
                 scores,
@@ -405,7 +420,26 @@ class Agent:
             )
             for rank, parent_asin in enumerate(popularity_ranking, start=1):
                 scores[parent_asin] += popularity_weight / (20.0 + rank)
+            if route_trace is not None:
+                route_trace.append(
+                    {
+                        "name": "popularity",
+                        "weight": popularity_weight,
+                        "count": len(popularity_ranking),
+                        "asins": popularity_ranking[:80],
+                    }
+                )
         ordered = sorted(scores, key=lambda asin: (-scores[asin], best_route_rank[asin], asin))
+        if route_trace is not None:
+            self._last_route_trace = {
+                "routes": route_trace,
+                "category": category,
+                "category_dropped": False,
+                "fused": [
+                    {"asin": asin, "score": round(scores[asin], 6)}
+                    for asin in ordered[:top_k]
+                ],
+            }
         return ordered[:top_k]
 
     @staticmethod
@@ -669,6 +703,10 @@ class Agent:
                 )
             scored.append((final_score, rank, parent_asin))
         scored.sort(key=lambda item: (-item[0], item[1], item[2]))
+        if self._enable_trace:
+            self._last_rerank_scores = {
+                parent_asin: score for score, _, parent_asin in scored
+            }
         return [parent_asin for _, _, parent_asin in scored[:top_k]]
 
     @staticmethod
@@ -693,16 +731,76 @@ class Agent:
             "override_seen": bool(state.get("override_seen")),
         }
 
+    @staticmethod
+    def _annotate_message(message: str) -> list[dict[str, object]]:
+        """Classify character spans of a message for UI highlighting."""
+        lowered = message.lower().replace("\u2019", "'").replace("\u2018", "'")
+        annotations: list[dict[str, object]] = []
+
+        def add(start: int, end: int, kind: str) -> None:
+            text = message[start:end].strip(" .;,")
+            if not text:
+                return
+            offset = message[start:end].find(text[0]) if message[start:end] else 0
+            annotations.append(
+                {
+                    "start": start + offset,
+                    "end": start + offset + len(text),
+                    "text": text,
+                    "kind": kind,
+                }
+            )
+
+        category_match = re.search(
+            r"i'm looking for\s+(.+?)(?=,\s*but|\.|$)", lowered
+        )
+        if category_match:
+            add(category_match.start(1), category_match.end(1), "category")
+        for marker in ("key requirement is:", "what matters is:", "what i need is:"):
+            position = lowered.find(marker)
+            if position < 0:
+                continue
+            cursor = position + len(marker)
+            terminal = lowered.find(".", cursor)
+            if terminal < 0:
+                terminal = len(lowered)
+            segment_start = cursor
+            for fragment in lowered[cursor:terminal].split(";"):
+                add(segment_start, segment_start + len(fragment), "constraint")
+                segment_start += len(fragment) + 1
+        for pattern, kind in (
+            (r"still exploring|just browsing|not sure yet", "intent"),
+            (r"i'm changing my shopping intent to (?:buying|browsing)", "intent"),
+            (r"actually, ignore my earlier preference", "override"),
+            (r"don't have an additional preference for \w+", "exhausted"),
+            (r"don't have a preference for \w+", "boundary"),
+        ):
+            for match in re.finditer(pattern, lowered):
+                add(match.start(), match.end(), kind)
+        annotations.sort(key=lambda span: (span["start"], span["end"]))
+        return annotations
+
     def _dialogue_rerank(
         self, ranked: list[str], state: dict[str, object]
     ) -> list[str]:
         if self._dialogue_index is None or not state.get("protocol_compatible"):
+            if self._enable_trace:
+                state["last_prefix_trace"] = None
             return ranked
         constraints = self._constraint_phrases(state.get("messages"))
         matches = self._dialogue_index.matching_prefix(
             str(state.get("category_query", "")), constraints
         )
         state["last_dialogue_match_count"] = len(matches)
+        if self._enable_trace:
+            state["last_prefix_trace"] = {
+                "category": str(state.get("category_query", "")),
+                "values": [
+                    _normalized_value(constraint) for constraint in constraints
+                ],
+                "match_count": len(matches),
+                "matches": [],
+            }
         if not matches:
             return ranked
         learned_rank = {asin: rank for rank, asin in enumerate(ranked, start=1)}
@@ -764,6 +862,8 @@ class Agent:
         else:
             key = popularity_key
         prefix_ranked = sorted(matches, key=key)[: self._rerank_candidate_limit]
+        if self._enable_trace and isinstance(state.get("last_prefix_trace"), dict):
+            state["last_prefix_trace"]["matches"] = list(prefix_ranked[:80])
         prefix_set = set(prefix_ranked)
         return prefix_ranked + [asin for asin in ranked if asin not in prefix_set]
 
@@ -777,6 +877,9 @@ class Agent:
         if session_id not in self._sessions:
             raise RuntimeError("reset must be called before respond")
         state = self._sessions[session_id]
+        if self._enable_trace:
+            self._last_route_trace = None
+            self._last_rerank_scores = {}
         if not message_is_protocol_compatible(user_message):
             state["protocol_compatible"] = False
         lowered_user_message = normalize_protocol_text(user_message).lower()
@@ -876,12 +979,19 @@ class Agent:
         shown = state["shown"]
         shown_before = len(shown) if isinstance(shown, set) else 0
         coverage_rotation_used = False
+        rotation_skipped: list[str] = []
         if (
             self._use_coverage_rotation
             and state["last_signature"] == signature
             and isinstance(shown, set)
         ):
             coverage_rotation_used = True
+            if self._enable_trace:
+                rotation_skipped = [
+                    parent_asin
+                    for parent_asin in ranked[self._coverage_head:]
+                    if parent_asin in shown
+                ][:top_k]
             head = ranked[:self._coverage_head]
             selected = head + [
                 parent_asin for parent_asin in ranked[self._coverage_head:]
@@ -941,13 +1051,42 @@ class Agent:
                 if bool(state.get("protocol_compatible"))
                 else None
             )
+            route_trace = (
+                self._last_route_trace
+                if isinstance(self._last_route_trace, dict)
+                else {"routes": [], "category": None, "category_dropped": False, "fused": []}
+            )
+            route_membership: dict[str, list[str]] = {}
+            for route in route_trace.get("routes", []):
+                for asin in route.get("asins", []):
+                    route_membership.setdefault(str(asin), []).append(str(route["name"]))
+            exact_set_trace = set(exact_candidates)
+            merged_pool = [
+                {
+                    "asin": asin,
+                    "exact": asin in exact_set_trace,
+                    "routes": route_membership.get(asin, []),
+                }
+                for asin in merged_candidates
+            ]
+            if coverage_rotation_used and rotation_skipped:
+                decision = "rotation"
+            elif ambiguity_abstention_used or opening_abstention_used:
+                decision = "abstain_1"
+            else:
+                decision = "top_k"
             state["last_trace"] = {
+                "message": user_message,
+                "query_annotations": self._annotate_message(user_message),
                 "catalog": {"count": len(self._product_views)},
                 "conversation": {
                     "protocol_compatible": bool(state.get("protocol_compatible")),
                     "intent_mode": mode,
                     "override_seen": bool(state.get("override_seen")),
                     "boundary_seen": bool(state.get("boundary_seen")),
+                    "exploratory": bool(state.get("exploratory")),
+                    "exhausted": bool(state.get("exhausted")),
+                    "intent_switched": shopping_intent is not None,
                 },
                 "query": {
                     "category": str(state.get("category_query", "")),
@@ -961,15 +1100,34 @@ class Agent:
                     "exact_evidence_count": len(exact_candidates),
                     "merged_count": len(merged_candidates),
                     "candidate_asins": list(merged_candidates),
+                    "routes": route_trace.get("routes", []),
+                    "category_dropped": bool(route_trace.get("category_dropped")),
+                    "fused": route_trace.get("fused", []),
+                    "fused_asins": list(sparse_candidates),
+                    "exact_asins": list(exact_candidates),
+                    "merged_pool": merged_pool,
                 },
                 "ranking": {
                     "linear_count": len(linear_ranking),
                     "linear_head": list(linear_ranking[:10]),
+                    "linear_ranking": list(linear_ranking),
+                    "linear_scores": [
+                        {
+                            "asin": asin,
+                            "score": round(self._last_rerank_scores.get(asin, 0.0), 6),
+                        }
+                        for asin in linear_ranking
+                    ],
                     "dialogue_match_count": dialogue_match_count,
                     "dialogue_head": list(ranked[:10]),
+                    "dialogue_ranking": list(ranked[:80]),
+                    "prefix": state.get("last_prefix_trace"),
                 },
                 "selection": {
+                    "decision": decision,
+                    "output_k": len(selected),
                     "coverage_rotation_used": coverage_rotation_used,
+                    "rotation_skipped": rotation_skipped,
                     "opening_abstention_used": opening_abstention_used,
                     "ambiguity_abstention_used": ambiguity_abstention_used,
                     "shown_before": shown_before,

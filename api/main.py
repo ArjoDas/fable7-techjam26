@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from .models import (
     CatalogMeta,
+    ExamplesResponse,
     ReadyResponse,
     SessionCreate,
     SessionResponse,
@@ -135,10 +136,20 @@ def create_app(
         ensure_ready()
         return await runtime.catalog_meta()
 
+    @app.get("/v1/examples", response_model=ExamplesResponse)
+    async def examples() -> dict[str, Any]:
+        ensure_ready()
+        return {"examples": runtime.examples}
+
     @app.post("/v1/sessions", response_model=SessionResponse, status_code=201)
     async def create_session(body: SessionCreate) -> SessionResponse:
         ensure_ready()
-        record = await sessions.create(body.mode, body.user_profile)
+        record = await sessions.create(
+            body.mode,
+            body.user_profile,
+            include_trace=body.include_trace,
+            semantic=body.semantic,
+        )
         await runtime.reset(record.session_id, record.profile)
         options: list[dict[str, Any]] = []
         if record.mode == "internals":
@@ -183,7 +194,8 @@ def create_app(
                 session_id,
                 message,
                 next_turn,
-                include_trace=record.mode == "internals",
+                include_trace=record.mode == "internals" or record.include_trace,
+                semantic=record.semantic,
             )
         except (RuntimeNotReady, KeyError) as exc:
             await sessions.finish_turn(session_id, next_turn, success=False)

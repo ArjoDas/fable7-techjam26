@@ -7,9 +7,12 @@ from pathlib import Path
 from typing import Any, Callable, TypeVar
 
 from starter.agent import Agent
+from starter.cp5_dialogue import message_is_protocol_compatible
 
+from .examples import build_examples
 from .guided_options import follow_up_options, opening_options
 from .products import ProductCatalog
+from .semantic import SemanticMapper
 
 
 T = TypeVar("T")
@@ -27,6 +30,8 @@ class AgentRuntime:
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agent")
         self.agent: Agent | None = None
         self.products: ProductCatalog | None = None
+        self.semantic: SemanticMapper | None = None
+        self.examples: list[dict[str, Any]] = []
         self.status = "initializing"
         self.error: str | None = None
         self.startup_seconds: float | None = None
@@ -39,17 +44,25 @@ class AgentRuntime:
     async def _initialize(self) -> None:
         started = time.perf_counter()
         try:
-            agent, products = await self._submit(self._build)
+            agent, products, semantic, examples = await self._submit(self._build)
             self.agent = agent
             self.products = products
+            self.semantic = semantic
+            self.examples = examples
             self.startup_seconds = round(time.perf_counter() - started, 3)
             self.status = "ready"
         except Exception as exc:
             self.error = str(exc)
             self.status = "error"
 
-    def _build(self) -> tuple[Agent, ProductCatalog]:
-        return Agent(self.catalog_path, enable_trace=True), ProductCatalog(self.catalog_path)
+    def _build(
+        self,
+    ) -> tuple[Agent, ProductCatalog, SemanticMapper, list[dict[str, Any]]]:
+        agent = Agent(self.catalog_path, enable_trace=True)
+        products = ProductCatalog(self.catalog_path)
+        semantic = SemanticMapper(agent)
+        examples = build_examples(agent, products)
+        return agent, products, semantic, examples
 
     async def _submit(self, fn: Callable[[], T]) -> T:
         loop = asyncio.get_running_loop()
@@ -93,15 +106,39 @@ class AgentRuntime:
         return await self._submit(operation)
 
     async def respond(
-        self, session_id: str, message: str, turn: int, *, include_trace: bool
+        self,
+        session_id: str,
+        message: str,
+        turn: int,
+        *,
+        include_trace: bool,
+        semantic: bool = False,
     ) -> dict[str, Any]:
         def operation() -> dict[str, Any]:
             agent, products = self._require()
             state = agent._sessions[session_id]
             state["turn"] = turn
-            response = agent.respond(session_id, message, turn, 10)
+            agent_message = message
+            semantic_trace: dict[str, Any] | None = None
+            if (
+                semantic
+                and self.semantic is not None
+                and not message_is_protocol_compatible(message)
+            ):
+                semantic_trace = self.semantic.map(message, turn)
+                canonical = semantic_trace.get("canonical_message")
+                if canonical:
+                    agent_message = str(canonical)
+            response = agent.respond(session_id, agent_message, turn, 10)
             options = follow_up_options(agent, session_id) if include_trace else []
             trace = state.get("last_trace") if include_trace else None
+            if trace is not None:
+                trace = {
+                    **trace,
+                    "input_message": message,
+                    "agent_message": agent_message,
+                    "semantic": semantic_trace,
+                }
             return {
                 "assistant": {
                     "message": str(response.get("message") or ""),

@@ -1,4 +1,9 @@
-import type { DemoMode, SessionResponse, TurnResponse } from "./contracts";
+import type {
+  ExampleSession,
+  ReadyResponse,
+  SessionResponse,
+  TurnResponse,
+} from "./contracts";
 
 const API_BASE = (
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
@@ -32,16 +37,38 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-export function createSession(mode: DemoMode): Promise<SessionResponse> {
+export function getReady(): Promise<ReadyResponse> {
+  return fetch(`${API_BASE}/readyz`)
+    .then((response) => response.json())
+    .catch(() => ({
+      status: "initializing" as const,
+      catalog_size: null,
+      startup_seconds: null,
+      message: null,
+    }));
+}
+
+export function getExamples(): Promise<{ examples: ExampleSession[] }> {
+  return request("/v1/examples");
+}
+
+export function createSession(options: {
+  semantic: boolean;
+}): Promise<SessionResponse> {
   return request("/v1/sessions", {
     method: "POST",
-    body: JSON.stringify({ mode, user_profile: {} }),
+    body: JSON.stringify({
+      mode: "demo",
+      user_profile: {},
+      include_trace: true,
+      semantic: options.semantic,
+    }),
   });
 }
 
 export function sendTurn(
   sessionId: string,
-  body: { message?: string; option_id?: string },
+  body: { message: string },
 ): Promise<TurnResponse> {
   return request(`/v1/sessions/${sessionId}/turns`, {
     method: "POST",
@@ -52,4 +79,3 @@ export function sendTurn(
 export function resetSession(sessionId: string): Promise<SessionResponse> {
   return request(`/v1/sessions/${sessionId}/reset`, { method: "POST" });
 }
-

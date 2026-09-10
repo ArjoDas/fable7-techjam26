@@ -27,3 +27,4 @@ tests/test_5core_builder.py
 tests/test_organizer_pipeline.py
 
 .venv-embed/
+dev-assets/

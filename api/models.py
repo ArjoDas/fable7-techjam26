@@ -11,6 +11,8 @@ DemoMode = Literal["internals", "demo"]
 class SessionCreate(BaseModel):
     mode: DemoMode = "demo"
     user_profile: dict[str, Any] = Field(default_factory=dict)
+    include_trace: bool = False
+    semantic: bool = False
 
 
 class TurnCreate(BaseModel):
@@ -72,6 +74,25 @@ class CategoryMeta(BaseModel):
 class CatalogMeta(BaseModel):
     product_count: int
     categories: list[CategoryMeta]
+
+
+class ExampleTurn(BaseModel):
+    structured: str
+    natural: str
+
+
+class ExampleSession(BaseModel):
+    id: str
+    label: str
+    scenario: str
+    category: str
+    target_asin: str
+    target_title: str
+    turns: list[ExampleTurn]
+
+
+class ExamplesResponse(BaseModel):
+    examples: list[ExampleSession]
 
 
 class ReadyResponse(BaseModel):

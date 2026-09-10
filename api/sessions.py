@@ -17,6 +17,8 @@ class SessionRecord:
     last_accessed_at: float = field(default_factory=time.monotonic)
     in_flight: bool = False
     options: dict[str, dict[str, Any]] = field(default_factory=dict)
+    include_trace: bool = False
+    semantic: bool = False
 
 
 class SessionStore:
@@ -25,10 +27,23 @@ class SessionStore:
         self.records: dict[str, SessionRecord] = {}
         self.lock = asyncio.Lock()
 
-    async def create(self, mode: str, profile: dict[str, Any]) -> SessionRecord:
+    async def create(
+        self,
+        mode: str,
+        profile: dict[str, Any],
+        *,
+        include_trace: bool = False,
+        semantic: bool = False,
+    ) -> SessionRecord:
         async with self.lock:
             session_id = str(uuid.uuid4())
-            record = SessionRecord(session_id, mode, dict(profile))
+            record = SessionRecord(
+                session_id,
+                mode,
+                dict(profile),
+                include_trace=include_trace,
+                semantic=semantic,
+            )
             self.records[session_id] = record
             return record
 

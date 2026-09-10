@@ -1,4 +1,8 @@
 fastapi>=0.115,<1
 uvicorn[standard]>=0.34,<1
 httpx>=0.28,<1
-
+# Optional: local MiniLM semantic keyword matching for natural-language turns.
+# The API falls back to lexical matching when these are unavailable.
+onnxruntime>=1.20,<2
+tokenizers>=0.20,<1
+numpy>=1.26
