@@ -1,0 +1,94 @@
+{
+  "manifest": {
+    "seed_default": 20260910,
+    "model_revisions": {
+      "qwen_revision": "bc640142c66e1fdd12af0bd68f40445458f3869b",
+      "minilm_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "llama_tag": "b10883"
+    },
+    "artifact_provenance_hashes": {},
+    "resources": {
+      "physical_cpus": 16,
+      "ram_gib": 31.519893646240234,
+      "available_ram_gib": 3.3242530822753906,
+      "cpu_percent_snapshot": 35.3
+    },
+    "created_utc": "2026-09-10T12:27:54.095910+00:00",
+    "commit": "1ad285ed985ed9242b7fc61067bf21a87152d1d1",
+    "source_hashes": {
+      "extension\\__init__.py": "5159b896c6171143d7485b27873e4247991c7e6b7be26cf004d1895154859aa1",
+      "extension\\agent.py": "0d5d7f1c606df971281ae897b09a0e19c97ceba9b2d0191cb4d3c0f058a49a59",
+      "extension\\baseline.py": "dcbfbcc3ba169e62fc16733991104d4f4329e9dee77201c807871f4173f24baa",
+      "extension\\catalog.py": "ccf6b74c52b58d619db19daf8c07c58553bcd81175e3cf06b357f5c26c6477c6",
+      "extension\\common.py": "e15906218a3324fc964825f3c6a04d1c0b044d365a2c4dfd830d3a0bd25243e1",
+      "extension\\datasets.py": "077aae18ca2466c2069d7e5f8b0bf4b8a2d0be8210acb1b1297d8154dbb6f23e",
+      "extension\\evaluate.py": "ea6a20e05c132df2f00f09de0da9f5450db62cbe53658d95f0c4f2c1be09c310",
+      "extension\\index.py": "589ec5288495b44497a41267e9169407a2272a831199589c75715f7a223df84a",
+      "extension\\ingest.py": "492c6a1d9c0b8cc9adbde55ea462d0d7dac645daafe8aec738cc0a0c9179b3e3",
+      "extension\\models.py": "07ee37cc7b4e23092a1172e245165badee0846e312eb9a6331c73e9dc56ce1b4",
+      "extension\\providers.py": "176936bd5b369cbfe7bae9319e233421c79fae9a27311d9a59b643f420b9f1da",
+      "extension\\rerankers.py": "4de7a5a947263682cc2c1caa795f40c354ddc715f23841b357cae08c4bce4cbc",
+      "extension\\runtime.py": "b862bf82dadb540035c22793bb1a8784de8b1a0df4fe5d1d40473d71d37766f9",
+      "extension\\service.py": "5aafcff9db1327e4fbb47b75a955919bb7b4991e92fad692db33cc80bf6f5050",
+      "extension\\vectors.py": "47cd2ae8b35246e0ed1e54aea9ea2f5ac03fd9f4dc6eedf13d69333d46a44130",
+      "extension\\watchdog.py": "da70dfc89f680367fd2f12364adea455b6834837c527baeb090b01aeba107a65",
+      "starter\\__init__.py": "7c597cb17dd97c2246abfa3a369a4c584db881b3c91057cfeac1a4c39cc71a03",
+      "starter\\agent.py": "21b2b3d356f07707f67cb8f3fee45e7b7de8ddf3f295b3e4fd22865a9faad173",
+      "starter\\cp5_dialogue.py": "f489b227634a29a8f75abfecdf531d59cfd4858033b72d738ff4d1d2ed8554e3",
+      "evaluator\\__init__.py": "483a8509b2378bab87ffa1d0ca2c2e418cafd825f871dfa0777c0800be14c174",
+      "evaluator\\local_evaluator.py": "84ea899707452de249ca62abee77c4b40ab7a3139b5cc798ac30c9f521f91b30"
+    },
+    "python": "3.13.1",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "logical_cpus": 22,
+    "config": {
+      "variant": "extension-protocol"
+    },
+    "inputs": {
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\releases\\cp7\\datasets\\cp3-smoke.jsonl": "894cd4e379c4a2e18941bd3e40e26b173f5b7f85887d1ab7b1a0f57360875c80",
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\catalog.jsonl": "da979b05a68af864cb0dcf9ee6a81c010c7e66a57978ad286c7a2e005fc69a67"
+    }
+  },
+  "aggregate": {
+    "sample_count": 20,
+    "hit_rate_at_10": 1.0,
+    "mrr": 1.0,
+    "mttc": 2.25,
+    "efficiency": 0.875,
+    "recommended_technical_score": 0.975,
+    "reported_token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 1,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 3.0
+      },
+      "browsing": {
+        "sample_count": 8,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 2.0
+      },
+      "buying": {
+        "sample_count": 8,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.75
+      },
+      "intent_override": {
+        "sample_count": 3,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 4.0
+      }
+    }
+  },
+  "model_calls": 0,
+  "elapsed_seconds": 93.6806132999991,
+  "nonprotocol_final_traces": 0
+}

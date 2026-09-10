@@ -1,0 +1,123 @@
+{
+  "manifest": {
+    "seed_default": 20260910,
+    "model_revisions": {
+      "qwen_revision": "bc640142c66e1fdd12af0bd68f40445458f3869b",
+      "minilm_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "llama_tag": "b10883"
+    },
+    "artifact_provenance_hashes": {},
+    "resources": {
+      "physical_cpus": 16,
+      "ram_gib": 31.519893646240234,
+      "available_ram_gib": 7.3838653564453125,
+      "cpu_percent_snapshot": 0.0
+    },
+    "created_utc": "2026-09-10T12:55:16.776004+00:00",
+    "commit": "d2f33ce291ad2431ee334b9ebcc205eb4f26a198",
+    "source_hashes": {
+      "extension\\__init__.py": "5159b896c6171143d7485b27873e4247991c7e6b7be26cf004d1895154859aa1",
+      "extension\\agent.py": "a8cae177f1cab22c9ec88b55ff05cb4620a77096e3149256b1a897dc69057c47",
+      "extension\\api_benchmark.py": "33843ecf8f0fb3026686a8e3416a8dd17865a11ef55252fbc15ccc249f54a452",
+      "extension\\audit.py": "509b1296144a6b54af9c720015d6b260c1583eb010be7608354eb19f2aa12a74",
+      "extension\\baseline.py": "dcbfbcc3ba169e62fc16733991104d4f4329e9dee77201c807871f4173f24baa",
+      "extension\\batched_updates.py": "e5a2140407bdb5666a1a9938a846295f456a3d7d4308a93f5d367e7f0fbf41aa",
+      "extension\\catalog.py": "5a66a2d223cd070614d0875a3fd7166184356114bf7137f621e959d14dcc4712",
+      "extension\\common.py": "e15906218a3324fc964825f3c6a04d1c0b044d365a2c4dfd830d3a0bd25243e1",
+      "extension\\datasets.py": "5624e6b7452999aa4764bc82012647ca2b1706724730c3e6a9694f3c2e6e5221",
+      "extension\\evaluate.py": "d5750eda475e10a1feb3e182466389cb31e66ea3f5b579826473482ba1d63589",
+      "extension\\factory.py": "62917a3cb4cc30e1f087b1731f683326c50ce352b8fc7d695c6300be51fa3095",
+      "extension\\index.py": "5f9f8249627929ce42a17d9ebc6f387bc198696d2d14864699c8d6caa240b14a",
+      "extension\\ingest.py": "492c6a1d9c0b8cc9adbde55ea462d0d7dac645daafe8aec738cc0a0c9179b3e3",
+      "extension\\learned.py": "3ce473a82840f2c6a9b4edceff37de17624e5a1c4aa3d9cbb75333d24d64f629",
+      "extension\\lexical.py": "ad8c51bf90a78676a9aa2d389abbf9be463b4111893c01bbb0a88166bfdcca33",
+      "extension\\lightrag_benchmark.py": "aa27fa61d456b9a067c7ddc5efebd22c46ffeead2710fb636d66c8fdd305acae",
+      "extension\\load.py": "b6bea963f3ec00731b0f72623cda134d0ccffb697e8c43f32a50d7be6b7b9bd2",
+      "extension\\models.py": "9c40527339f8365423fa25ca2d6b75cc227b753ad59f4d248ec46f231b81a6c2",
+      "extension\\providers.py": "e2baf6126ce6cbc78b7bd117a508d11608513e0297cafb3c8a0f1196f7db2636",
+      "extension\\representation_benchmark.py": "71c719a2af08ee1df51b1abf325a201ff76f69c7fda59199c2ebcb70b643cc9d",
+      "extension\\rerankers.py": "57a8ea03194b96e2213c9572d9cdd240cafe01165345c0723df573cbab03c0aa",
+      "extension\\residual.py": "4634c60c41783af3b7419c7e918db8909e0a5aec12007f13e10dd13c4da643d0",
+      "extension\\runtime.py": "b862bf82dadb540035c22793bb1a8784de8b1a0df4fe5d1d40473d71d37766f9",
+      "extension\\service.py": "cf4ff928379ba7c2eb9b58c2d38ea378985a3d6e627e349bbb6d14b9505e4a78",
+      "extension\\update_benchmark.py": "c0d3b5d3cd392226ce4d1e54a5d926b7b17b5fbfcf5d12f45b955cba6aa9ce7a",
+      "extension\\vectors.py": "47cd2ae8b35246e0ed1e54aea9ea2f5ac03fd9f4dc6eedf13d69333d46a44130",
+      "extension\\watchdog.py": "da70dfc89f680367fd2f12364adea455b6834837c527baeb090b01aeba107a65",
+      "starter\\__init__.py": "7c597cb17dd97c2246abfa3a369a4c584db881b3c91057cfeac1a4c39cc71a03",
+      "starter\\agent.py": "21b2b3d356f07707f67cb8f3fee45e7b7de8ddf3f295b3e4fd22865a9faad173",
+      "starter\\cp5_dialogue.py": "f489b227634a29a8f75abfecdf531d59cfd4858033b72d738ff4d1d2ed8554e3",
+      "evaluator\\__init__.py": "483a8509b2378bab87ffa1d0ca2c2e418cafd825f871dfa0777c0800be14c174",
+      "evaluator\\local_evaluator.py": "84ea899707452de249ca62abee77c4b40ab7a3139b5cc798ac30c9f521f91b30"
+    },
+    "python": "3.13.1",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "logical_cpus": 22,
+    "config": {
+      "max_batch_wait_seconds": 0.1
+    },
+    "inputs": {}
+  },
+  "rates": [
+    {
+      "offered_events_per_second": 1,
+      "batch_size": 1,
+      "elapsed_seconds": 9.180101599999034,
+      "achieved_events_per_second": 1.089312123685778,
+      "visibility": {
+        "count": 10,
+        "p50_ms": 48.60804999952961,
+        "p95_ms": 52.81294499691285,
+        "p99_ms": 53.65674899680016,
+        "tail_under_sampled": true
+      },
+      "search": {
+        "count": 10,
+        "p50_ms": 120.02880000000005,
+        "p95_ms": 129.01690499911638,
+        "p99_ms": 130.03970099856815,
+        "tail_under_sampled": true
+      }
+    },
+    {
+      "offered_events_per_second": 10,
+      "batch_size": 1,
+      "elapsed_seconds": 17.5354533000027,
+      "achieved_events_per_second": 5.702731491477902,
+      "visibility": {
+        "count": 100,
+        "p50_ms": 3526.9189000009646,
+        "p95_ms": 7146.334315000058,
+        "p99_ms": 7428.134435001302,
+        "tail_under_sampled": true
+      },
+      "search": {
+        "count": 100,
+        "p50_ms": 122.26914999882865,
+        "p95_ms": 150.20523499988482,
+        "p99_ms": 175.26954900065905,
+        "tail_under_sampled": true
+      }
+    },
+    {
+      "offered_events_per_second": 100,
+      "batch_size": 10,
+      "elapsed_seconds": 20.056665000000066,
+      "achieved_events_per_second": 49.858729527875454,
+      "visibility": {
+        "count": 1000,
+        "p50_ms": 4930.368849998558,
+        "p95_ms": 9504.525270000884,
+        "p99_ms": 9920.676236998697,
+        "tail_under_sampled": true
+      },
+      "search": {
+        "count": 1000,
+        "p50_ms": 128.59000000025844,
+        "p95_ms": 144.5704050003767,
+        "p99_ms": 158.4568379990013,
+        "tail_under_sampled": true
+      }
+    }
+  ],
+  "scope": "Interleaved local search; external HTTP concurrency evaluated separately"
+}

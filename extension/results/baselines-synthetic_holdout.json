@@ -1,0 +1,102 @@
+{
+  "manifest": {
+    "seed_default": 20260910,
+    "model_revisions": {
+      "qwen_revision": "bc640142c66e1fdd12af0bd68f40445458f3869b",
+      "minilm_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "llama_tag": "b10883"
+    },
+    "artifact_provenance_hashes": {},
+    "resources": {
+      "physical_cpus": 16,
+      "ram_gib": 31.519893646240234,
+      "available_ram_gib": 3.7688140869140625,
+      "cpu_percent_snapshot": 53.8
+    },
+    "created_utc": "2026-09-10T12:47:26.686613+00:00",
+    "commit": "1ad285ed985ed9242b7fc61067bf21a87152d1d1",
+    "source_hashes": {
+      "extension\\__init__.py": "5159b896c6171143d7485b27873e4247991c7e6b7be26cf004d1895154859aa1",
+      "extension\\agent.py": "1aab51fc2c1bf1a3274b356931caef245f0db7334aa2d6d17d9311aaf5c52603",
+      "extension\\api_benchmark.py": "33843ecf8f0fb3026686a8e3416a8dd17865a11ef55252fbc15ccc249f54a452",
+      "extension\\audit.py": "509b1296144a6b54af9c720015d6b260c1583eb010be7608354eb19f2aa12a74",
+      "extension\\baseline.py": "dcbfbcc3ba169e62fc16733991104d4f4329e9dee77201c807871f4173f24baa",
+      "extension\\batched_updates.py": "e5a2140407bdb5666a1a9938a846295f456a3d7d4308a93f5d367e7f0fbf41aa",
+      "extension\\catalog.py": "5a66a2d223cd070614d0875a3fd7166184356114bf7137f621e959d14dcc4712",
+      "extension\\common.py": "e15906218a3324fc964825f3c6a04d1c0b044d365a2c4dfd830d3a0bd25243e1",
+      "extension\\datasets.py": "077aae18ca2466c2069d7e5f8b0bf4b8a2d0be8210acb1b1297d8154dbb6f23e",
+      "extension\\evaluate.py": "0a62d0413b617cb053099445113121e730e96d6ef897021a52c82cd1524667c9",
+      "extension\\index.py": "5f9f8249627929ce42a17d9ebc6f387bc198696d2d14864699c8d6caa240b14a",
+      "extension\\ingest.py": "492c6a1d9c0b8cc9adbde55ea462d0d7dac645daafe8aec738cc0a0c9179b3e3",
+      "extension\\learned.py": "3ce473a82840f2c6a9b4edceff37de17624e5a1c4aa3d9cbb75333d24d64f629",
+      "extension\\lightrag_benchmark.py": "aa27fa61d456b9a067c7ddc5efebd22c46ffeead2710fb636d66c8fdd305acae",
+      "extension\\models.py": "07ee37cc7b4e23092a1172e245165badee0846e312eb9a6331c73e9dc56ce1b4",
+      "extension\\providers.py": "e2baf6126ce6cbc78b7bd117a508d11608513e0297cafb3c8a0f1196f7db2636",
+      "extension\\representation_benchmark.py": "71c719a2af08ee1df51b1abf325a201ff76f69c7fda59199c2ebcb70b643cc9d",
+      "extension\\rerankers.py": "57a8ea03194b96e2213c9572d9cdd240cafe01165345c0723df573cbab03c0aa",
+      "extension\\residual.py": "4634c60c41783af3b7419c7e918db8909e0a5aec12007f13e10dd13c4da643d0",
+      "extension\\runtime.py": "b862bf82dadb540035c22793bb1a8784de8b1a0df4fe5d1d40473d71d37766f9",
+      "extension\\service.py": "668560df845169d93ebddcf0cace3d5438368345f7f9fde96ffedcdf6f9270b3",
+      "extension\\update_benchmark.py": "b66d4f29fa84befd7e0a2b5700cdccb331aad47e100ce1191a6d8361a5c7c9fe",
+      "extension\\vectors.py": "47cd2ae8b35246e0ed1e54aea9ea2f5ac03fd9f4dc6eedf13d69333d46a44130",
+      "extension\\watchdog.py": "da70dfc89f680367fd2f12364adea455b6834837c527baeb090b01aeba107a65",
+      "starter\\__init__.py": "7c597cb17dd97c2246abfa3a369a4c584db881b3c91057cfeac1a4c39cc71a03",
+      "starter\\agent.py": "21b2b3d356f07707f67cb8f3fee45e7b7de8ddf3f295b3e4fd22865a9faad173",
+      "starter\\cp5_dialogue.py": "f489b227634a29a8f75abfecdf531d59cfd4858033b72d738ff4d1d2ed8554e3",
+      "evaluator\\__init__.py": "483a8509b2378bab87ffa1d0ca2c2e418cafd825f871dfa0777c0800be14c174",
+      "evaluator\\local_evaluator.py": "84ea899707452de249ca62abee77c4b40ab7a3139b5cc798ac30c9f521f91b30"
+    },
+    "python": "3.13.1",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "logical_cpus": 22,
+    "config": {
+      "variant": "extension-protocol"
+    },
+    "inputs": {
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\releases\\cp7\\datasets\\synthetic_holdout.jsonl": "c5df68d530691d56257ab7e3a974bdfd56df7312e8919a3127797fb354ad701c",
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\catalog.jsonl": "da979b05a68af864cb0dcf9ee6a81c010c7e66a57978ad286c7a2e005fc69a67"
+    }
+  },
+  "aggregate": {
+    "sample_count": 1000,
+    "hit_rate_at_10": 0.999,
+    "mrr": 0.99625,
+    "mttc": 2.441,
+    "efficiency": 0.8559,
+    "recommended_technical_score": 0.969555,
+    "reported_token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 50,
+        "hit_rate_at_10": 0.98,
+        "mrr": 0.965,
+        "mttc": 3.26
+      },
+      "browsing": {
+        "sample_count": 400,
+        "hit_rate_at_10": 1.0,
+        "mrr": 0.996875,
+        "mttc": 2.3675
+      },
+      "buying": {
+        "sample_count": 400,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.885
+      },
+      "intent_override": {
+        "sample_count": 150,
+        "hit_rate_at_10": 1.0,
+        "mrr": 0.995,
+        "mttc": 3.846667
+      }
+    }
+  },
+  "model_calls": 0,
+  "elapsed_seconds": 1266.8268188000002,
+  "nonprotocol_final_traces": 13
+}

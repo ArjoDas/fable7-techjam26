@@ -1,0 +1,129 @@
+{
+  "manifest": {
+    "seed_default": 20260910,
+    "model_revisions": {
+      "qwen_revision": "bc640142c66e1fdd12af0bd68f40445458f3869b",
+      "minilm_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "llama_tag": "b10883"
+    },
+    "artifact_provenance_hashes": {
+      "starter\\reranker_weights.json": "304b262af0ae3408f25cfc66f84c7a7383760a46faf5e333efae79789178377b",
+      "data\\releases\\real-world-v1\\models\\manifest.json": "e1324d35879120b4609aebd160e1825446eaddbeac9b3bee755dd486d860e2a9"
+    },
+    "resources": {
+      "physical_cpus": 16,
+      "ram_gib": 31.519893646240234,
+      "available_ram_gib": 7.400501251220703,
+      "cpu_percent_snapshot": 0.0
+    },
+    "created_utc": "2026-09-10T14:01:16.440482+00:00",
+    "commit": "44976a1914a88f17eaf3f6c8fc66d6672cbd9b1b",
+    "source_hashes": {
+      "extension\\__init__.py": "5159b896c6171143d7485b27873e4247991c7e6b7be26cf004d1895154859aa1",
+      "extension\\agent.py": "56b71edad5b0ee9c906960369bcf15da8aebc1310a369cac639ab756a511773e",
+      "extension\\ambiguity.py": "6873b9c3cf3b6c07c05118cf89c051aae1418d41274d22ed10d2c7f7d82cb817",
+      "extension\\api_benchmark.py": "33843ecf8f0fb3026686a8e3416a8dd17865a11ef55252fbc15ccc249f54a452",
+      "extension\\audit.py": "23984180acfe99e78a490f5cf1c8ede0718414aeead02400dac2b924a34df739",
+      "extension\\baseline.py": "dcbfbcc3ba169e62fc16733991104d4f4329e9dee77201c807871f4173f24baa",
+      "extension\\batched_updates.py": "e5a2140407bdb5666a1a9938a846295f456a3d7d4308a93f5d367e7f0fbf41aa",
+      "extension\\campaign.py": "a2b3ac11acb2858471348985694df29a7b9d2f8e238ffe007f77eb75f4546738",
+      "extension\\catalog.py": "5a66a2d223cd070614d0875a3fd7166184356114bf7137f621e959d14dcc4712",
+      "extension\\common.py": "fbc4b39f346f810a5ce699fb45ead265762be85151e7a2098f43273d667cf5ba",
+      "extension\\datasets.py": "79a800d23751d3b531815bf8ae6851d846db93129d69f3b08f4e588cf247f2af",
+      "extension\\demo.py": "a9f2acf37ca28e5e5ed3b05249fda43370de019929c68faa3827955388b84c01",
+      "extension\\diagnostics.py": "b02ad06cfbfba2b6ff86c6334a3965210e155d4f9fc40109d46ef61b9f8a1270",
+      "extension\\evaluate.py": "b4ebcb238fcc62f0717a80443d08f7073f0eacb28f59f6ff34dd95f2f00f1259",
+      "extension\\export_results.py": "cf9f1476f0b96e7a9bb5d9c9ec57b41c334c62fa38e78032e8636458a03fb521",
+      "extension\\factory.py": "f7d62acb5031f2c6cc795a7326133679efbe77ba4405538b95886e671e774592",
+      "extension\\finalize_datasets.py": "22aee90fbe8e48fb0376bf90d0f5b3de9c1bbf2ab3c27a82698e4bf960c0af7e",
+      "extension\\generation_campaign.py": "1042808df95f914af5716c64c9467834d8a0eaa1b3a39e6446bb962931cdf2fa",
+      "extension\\index.py": "5f9f8249627929ce42a17d9ebc6f387bc198696d2d14864699c8d6caa240b14a",
+      "extension\\ingest.py": "492c6a1d9c0b8cc9adbde55ea462d0d7dac645daafe8aec738cc0a0c9179b3e3",
+      "extension\\learned.py": "35a3019112cc2828aaca3063dd3e170671201e03c2eeeefff3fd82436eac46fd",
+      "extension\\lexical.py": "ad8c51bf90a78676a9aa2d389abbf9be463b4111893c01bbb0a88166bfdcca33",
+      "extension\\lightrag_benchmark.py": "aa27fa61d456b9a067c7ddc5efebd22c46ffeead2710fb636d66c8fdd305acae",
+      "extension\\load.py": "b6bea963f3ec00731b0f72623cda134d0ccffb697e8c43f32a50d7be6b7b9bd2",
+      "extension\\load_campaign.py": "ade331974b617114aa398746b8668c84896544ec322f8d1571cbcc446cf2178f",
+      "extension\\models.py": "9c40527339f8365423fa25ca2d6b75cc227b753ad59f4d248ec46f231b81a6c2",
+      "extension\\outcomes.py": "d2ee1ce20cdc0b96863ea4421e8e5caaaf511753def8929f285f304d1f28c33b",
+      "extension\\parity.py": "e9c79074a9be0f6bd20008f8eefa858795a6c2213d059f28c58d4b2e00747662",
+      "extension\\passage_update_probe.py": "f865dec35bdad9f7a2ebd28d5a78b2f9339f44dc3f8abe7c1101c7cd7f44394f",
+      "extension\\passages.py": "0508fa13ebdc1feeabb62517ef07d52da1632b595ca20bc151336a21daed7cbf",
+      "extension\\prepare_load.py": "8774bd67a404c8cf1b314243074697f3a8e920027a2fcd0d4258f4bcfcd244ff",
+      "extension\\providers.py": "5c84a0e9730d37d411cd51e823f4b2666831d3598aa0e07d94517f49d7c3fb7b",
+      "extension\\quality_campaign.py": "9bb9aed3b98bd63af90db5ec8f68b21f29b075ae2023ca4ef88e18c8f7692fbd",
+      "extension\\rag.py": "f8e5e580f2e13119b734de6d1923158fcc5627b6e848d22f576cf1366fc55230",
+      "extension\\rag_campaign.py": "f733bad7ba0a0239a1f55d786668c5151cde5863984d1d9254b7f396af63487f",
+      "extension\\rag_regression.py": "c99da052404e450ac2679cd26c19e02ce8d0aad79470058775a3e43c74593b0e",
+      "extension\\report.py": "a868d261ba89bb43039b1faca3bdffc0ec1582c73921aed359b3883b5c63d4a5",
+      "extension\\representation_benchmark.py": "71c719a2af08ee1df51b1abf325a201ff76f69c7fda59199c2ebcb70b643cc9d",
+      "extension\\rerankers.py": "57a8ea03194b96e2213c9572d9cdd240cafe01165345c0723df573cbab03c0aa",
+      "extension\\residual.py": "9e98fec94f6924c20c5d63747f455eadc0b3f255f12cffa4005cdb488a6e1281",
+      "extension\\runtime.py": "b862bf82dadb540035c22793bb1a8784de8b1a0df4fe5d1d40473d71d37766f9",
+      "extension\\selection.py": "20f3cca0a2c405631d63855220266a0c52653c41b43cb2842205adc35731ea77",
+      "extension\\semantic_audit.py": "df1e480fedc291245275866e461f812bbecfbeb874a24d44a71db255e58bd67c",
+      "extension\\service.py": "ad023ef85d6a069c23405403738b747a5690f2e11e00722ac595833af7f9bc31",
+      "extension\\update_benchmark.py": "c0d3b5d3cd392226ce4d1e54a5d926b7b17b5fbfcf5d12f45b955cba6aa9ce7a",
+      "extension\\vector_updates.py": "a91d9e1f56dacc01a9dd0ac5b94ae75b80849a64b290dbede1622b99d8be83eb",
+      "extension\\vectors.py": "49b429891a748198a48d861606400dd50f37d9526b69eb577af1a2dce3ba5d9d",
+      "extension\\watchdog.py": "da70dfc89f680367fd2f12364adea455b6834837c527baeb090b01aeba107a65",
+      "starter\\__init__.py": "7c597cb17dd97c2246abfa3a369a4c584db881b3c91057cfeac1a4c39cc71a03",
+      "starter\\agent.py": "21b2b3d356f07707f67cb8f3fee45e7b7de8ddf3f295b3e4fd22865a9faad173",
+      "starter\\cp5_dialogue.py": "f489b227634a29a8f75abfecdf531d59cfd4858033b72d738ff4d1d2ed8554e3",
+      "evaluator\\__init__.py": "483a8509b2378bab87ffa1d0ca2c2e418cafd825f871dfa0777c0800be14c174",
+      "evaluator\\local_evaluator.py": "84ea899707452de249ca62abee77c4b40ab7a3139b5cc798ac30c9f521f91b30"
+    },
+    "python": "3.13.1",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "logical_cpus": 22,
+    "config": {
+      "variant": "rag-local",
+      "catalog": "official50k"
+    },
+    "inputs": {
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\catalog.jsonl": "da979b05a68af864cb0dcf9ee6a81c010c7e66a57978ad286c7a2e005fc69a67",
+      "C:\\Users\\sri56\\Desktop\\NUS_Y2S1\\Projects\\techjam-26\\data\\public_set.jsonl": "571359a8a69014c43fc30d39c996c4a28e875dccc249dffc707358757beb16c0"
+    }
+  },
+  "aggregate": {
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 1.0,
+    "mttc": 2.1,
+    "efficiency": 0.89,
+    "recommended_technical_score": 0.978,
+    "reported_token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 10,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 2.5
+      },
+      "browsing": {
+        "sample_count": 80,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.9875
+      },
+      "buying": {
+        "sample_count": 80,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.55
+      },
+      "intent_override": {
+        "sample_count": 30,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 3.733333
+      }
+    }
+  },
+  "model_calls": 0,
+  "nonprotocol_final_traces": 0
+}

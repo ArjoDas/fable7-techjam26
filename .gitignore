@@ -25,3 +25,5 @@ docs/participant_release_checklist.md
 # Organizer-only pipeline tests.
 tests/test_5core_builder.py
 tests/test_organizer_pipeline.py
+
+.venv-embed/
