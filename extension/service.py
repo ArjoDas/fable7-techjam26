@@ -276,6 +276,6 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=int, default=8092)
     parser.add_argument('--workers', type=int, default=1)
     parser.add_argument('--catalog',type=Path,default=ARTIFACTS/'stores/service')
-    parser.add_argument('--variant', choices=['rules','lexical','hybrid','graph','tinybert','tinybert-lexical','tinybert-100','gated-tinybert','minilm-cross','learned','residual','rag','rag-local','rag-passages','rag-passages-local'],default='rules')
+    parser.add_argument('--variant', choices=['rules','lexical','hybrid','graph','tinybert','tinybert-lexical','tinybert-100','gated-tinybert','minilm-cross','learned','residual','rag','rag-local','rag-passages','rag-passages-local','corrected-lexical','rag-passages-corrected','rag-passages-local-corrected'],default='rules')
     args = parser.parse_args()
     serve(args.port,args.workers,args.catalog,args.variant)

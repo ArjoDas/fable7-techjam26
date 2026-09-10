@@ -13,7 +13,7 @@ def freeze():
     canonical=ARTIFACTS/'datasets/canonical/manifest.json'
     if not canonical.exists():raise RuntimeError('Complete and freeze the generated benchmark first')
     candidates=[]
-    for variant in ('rules','hybrid','graph','tinybert','tinybert-100','tinybert-lexical','gated-tinybert','minilm-cross','learned','residual','rag','rag-passages','rag-local','rag-passages-local'):
+    for variant in ('rules','hybrid','graph','tinybert','tinybert-100','tinybert-lexical','gated-tinybert','minilm-cross','learned','residual','rag','rag-passages','rag-local','rag-passages-local','corrected-lexical','rag-passages-corrected','rag-passages-local-corrected'):
         result=ARTIFACTS/f'quality/dev-{variant}-natural-interactive-canonical-dev.json'
         if not result.exists():raise RuntimeError('Missing full development comparison: '+variant)
         data=json.loads(result.read_text(encoding='utf-8'));quality=data['aggregate']['hit_rate_at_10'];latency=data['aggregate']['response_latency']['p99_ms']

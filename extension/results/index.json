@@ -15,6 +15,11 @@
     "compact": "extension\\results\\baselines-public-rag-local.json"
   },
   {
+    "source": "data\\releases\\extension-v1\\baselines\\public-rag-passages-corrected.json",
+    "raw_sha256": "c324d12d73f778825b6215bb4694939c8104ac4e740b407ad5d0669d6704afdb",
+    "compact": "extension\\results\\baselines-public-rag-passages-corrected.json"
+  },
+  {
     "source": "data\\releases\\extension-v1\\baselines\\public.json",
     "raw_sha256": "dfecae4f4877e04b4d5e8b581a73057f39ce044450210bc75e1cf1549fd70993",
     "compact": "extension\\results\\baselines-public.json"
@@ -85,6 +90,16 @@
     "compact": "extension\\results\\api-screen-screen-1.2.json"
   },
   {
+    "source": "data\\releases\\extension-v1\\datasets\\audit.json",
+    "raw_sha256": "8889fb5637e42677d11d1c1348890aefa344f0aa53286cabcbfdc6a1b1ff2cce",
+    "compact": "extension\\results\\datasets-audit.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\datasets\\semantic-audit.json",
+    "raw_sha256": "f63ead46077382b982e3e9ce47d1e437189be3fa8c7956b0a86ada8ce6e16b13",
+    "compact": "extension\\results\\datasets-semantic-audit.json"
+  },
+  {
     "source": "data\\releases\\extension-v1\\quality\\dev-gated-tinybert-natural-interactive-screen-v2.json",
     "raw_sha256": "200a551d0e5db3d56d0200e2c215d91aaba3d60e5ed83c495d468211d05b7c2b",
     "compact": "extension\\results\\quality-dev-gated-tinybert-natural-interactive-screen-v2.json"
@@ -145,9 +160,24 @@
     "compact": "extension\\results\\quality-dev-tinybert-natural-interactive-screen-v2.json"
   },
   {
+    "source": "data\\releases\\extension-v1\\quality\\dev-rag-local-natural-interactive-semantic-screen.json",
+    "raw_sha256": "2428da6a67ba5360c60b74928075fdc589ccd12a72be155f320bf58757e663e9",
+    "compact": "extension\\results\\quality-dev-rag-local-natural-interactive-semantic-screen.json"
+  },
+  {
     "source": "data\\releases\\extension-v1\\quality\\dev-rag-natural-interactive-semantic-screen.json",
     "raw_sha256": "dc749959c500a9d210f564aed2205b08b80ef5d86e5c00b170e1208e7a260458",
     "compact": "extension\\results\\quality-dev-rag-natural-interactive-semantic-screen.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-rag-passages-local-natural-interactive-semantic-screen.json",
+    "raw_sha256": "5e1b48fb2a28a8231221da022500d365259fd758168e9799051ccaeb406cd13a",
+    "compact": "extension\\results\\quality-dev-rag-passages-local-natural-interactive-semantic-screen.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-rag-passages-natural-interactive-semantic-screen.json",
+    "raw_sha256": "8c3f11340815317b4bf9128f79882c954ad183db452d5bb162aeaaae90d764f6",
+    "compact": "extension\\results\\quality-dev-rag-passages-natural-interactive-semantic-screen.json"
   },
   {
     "source": "data\\releases\\extension-v1\\quality\\dev-tinybert-lexical-natural-interactive-semantic-screen.json",
@@ -155,8 +185,38 @@
     "compact": "extension\\results\\quality-dev-tinybert-lexical-natural-interactive-semantic-screen.json"
   },
   {
+    "source": "data\\releases\\extension-v1\\quality\\dev-corrected-lexical-natural-interactive-state-scope-screen.json",
+    "raw_sha256": "86e97871b6ac8d09d5832a6d4deb84a326ec826a041aec494d8940cee41a6bed",
+    "compact": "extension\\results\\quality-dev-corrected-lexical-natural-interactive-state-scope-screen.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\quality\\dev-rag-passages-corrected-natural-interactive-state-scope-screen.json",
+    "raw_sha256": "f5a129ec1b3f620d5a296fe314b903fdf712b1d2fd6afda5aa2841e48130995f",
+    "compact": "extension\\results\\quality-dev-rag-passages-corrected-natural-interactive-state-scope-screen.json"
+  },
+  {
     "source": "data\\releases\\extension-v1\\vectors\\passages\\manifest.json",
     "raw_sha256": "49c2d0c21c09fbcd9e98189c9028df095e1b30420682bfdfc7c635762e29d0d8",
     "compact": "extension\\results\\vectors-passages-manifest.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\rag\\unseen-update\\result.json",
+    "raw_sha256": "e927f753d96a13e76bbf49d87a61a7c85473ad46be7d41075852a6bfba56d6c0",
+    "compact": "extension\\results\\rag-unseen-update-result.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\rag\\development-comparison.json",
+    "raw_sha256": "ee61e451e51ad1472861cc28387fb41c27dda27ba35fe72d6fdf718aab50a79c",
+    "compact": "extension\\results\\rag-development-comparison.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\rag\\delta-store-1\\result.json",
+    "raw_sha256": "bdf65d6b7a0807fde9aa2411c16568befb60dae4951f6cb04805f52f725bb2fb",
+    "compact": "extension\\results\\rag-delta-store-1-result.json"
+  },
+  {
+    "source": "data\\releases\\extension-v1\\datasets\\canonical\\manifest.json",
+    "raw_sha256": "0fa5366b00ec6634ed34f31414c6aa49af787a1686d4d4f916a6f9be74f1f8b4",
+    "compact": "extension\\results\\datasets-canonical-manifest.json"
   }
 ]

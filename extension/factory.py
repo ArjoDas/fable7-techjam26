@@ -23,12 +23,16 @@ def create(store,variant,worker_id=None):
     if variant=='residual':
         from extension.residual import Residual
         reranker=Residual()
-    if variant in ('rag','rag-local','rag-passages','rag-passages-local'):
+    if variant in ('rag','rag-local','rag-passages','rag-passages-local','corrected-lexical','rag-passages-corrected','rag-passages-local-corrected'):
         from extension.rag import RAGAgent,CompactParser
         from extension.rerankers import CrossEncoder
         from extension.providers import Matcher
         if variant.startswith('rag-passages'):
             from extension.passages import PassageIndex
             vectors=PassageIndex(store,namespace='default' if worker_id is None else 'worker-'+str(worker_id))
-        return RAGAgent(catalog=store,variant='weighted-rag',vectors=vectors,reranker=CrossEncoder('tinybert',limit=100),parser=CompactParser() if variant.endswith('-local') else None)
+        agent_class=RAGAgent
+        if variant.endswith('-corrected') or variant=='corrected-lexical':
+            from extension.scoped_state import ScopedRAGAgent
+            agent_class=ScopedRAGAgent
+        return agent_class(catalog=store,variant='weighted-rag',vectors=vectors,reranker=CrossEncoder('tinybert',limit=100),parser=CompactParser() if '-local' in variant else None)
     return Agent(catalog=store,variant=variant,vectors=vectors,model=model,reranker=reranker,router=router)

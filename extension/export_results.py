@@ -12,7 +12,9 @@ def main():
         ARTIFACTS/'selection/frozen.json',ARTIFACTS/'selection/sealed-results.json',ARTIFACTS/'load/final-confirmation.json']
     paths+=list((ARTIFACTS/'quality').glob('*screen-v2.json'))
     paths+=list((ARTIFACTS/'quality').glob('*semantic-screen.json'))
-    paths+=[ARTIFACTS/'vectors/passages/manifest.json']
+    paths+=list((ARTIFACTS/'quality').glob('*state-scope-screen.json'))
+    paths+=[ARTIFACTS/'vectors/passages/manifest.json',ARTIFACTS/'rag/unseen-update/result.json',ARTIFACTS/'rag/development-comparison.json']
+    paths+=[ARTIFACTS/'rag/delta-store-1/result.json',ARTIFACTS/'datasets/canonical/manifest.json']
     for path in paths:
         if not path.exists():continue
         value=json.loads(path.read_text(encoding='utf-8'))

@@ -20,7 +20,7 @@ def main():
         if time.monotonic()>deadline:raise RuntimeError('Passage preprocessing did not finish within two hours')
         time.sleep(2)
     if json.loads(path.read_text(encoding='utf-8'))['products']!=60000:raise RuntimeError('Passage index is not full-catalog')
-    run('extension.passage_update_probe')
+    if not (ARTIFACTS/'rag/unseen-update/result.json').exists():run('extension.passage_update_probe')
     source=str(ARTIFACTS/'datasets/dev-screen-frozen.jsonl')
     for variant in ('tinybert-lexical','rag','rag-passages','rag-local','rag-passages-local'):
         label='semantic-screen'

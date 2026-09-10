@@ -92,7 +92,10 @@ checked independently of the model output.
 Passage vectors are keyed by a content hash and retained locally in SQLite.
 Publication events replace only affected product mappings. Unchanged passage
 vectors, including vectors needed after reintroduction, are reused. Repacking
-the search matrix is measured separately from neural encoding work. Passage
+the search matrix is measured separately from neural encoding work. The current
+implementation retains the base matrix and rebuilds only its mutable delta
+matrix after an event; deletion masks hide stale base entries. Explicit
+`PassageIndex.compact()` merges cached vectors without neural encoding. Passage
 retrieval uses the maximum passage similarity per product; lexical/semantic
 reciprocal-rank fusion weights are fixed at 2:1 for these ablations.
 

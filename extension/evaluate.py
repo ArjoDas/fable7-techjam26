@@ -16,7 +16,7 @@ def build(variant,catalog=None):
 
 
 
-def evaluate(agent,rows,protocol=False,replay=False):
+def evaluate(agent,rows,protocol=False,replay=False,progress_path=None):
     results=[]
     for index,row in enumerate(rows):
         sid=row['sample_id'];agent.reset(sid,{});shopper=Shopper(row,protocol,replay);asked=None;hit=0;rr=0;recall=False;transcript=[]
@@ -44,6 +44,10 @@ def evaluate(agent,rows,protocol=False,replay=False):
             asked=result.get('ask_attribute')
         results.append({'sample_id':sid,'target':row['target'],'group':row['group'],'scenario':row['scenario'],
                         'category':row['category_path'][0],'style':row['style'],'hit':bool(hit),'turn_to_hit':hit or 6,'rr':rr,'recall100':recall,'transcript':transcript})
+        if progress_path is not None:
+            progress_path.parent.mkdir(parents=True,exist_ok=True)
+            with progress_path.with_suffix('.jsonl').open('a',encoding='utf-8') as stream:stream.write(json.dumps(results[-1],ensure_ascii=False)+'\n')
+            if (index+1)%10==0:write_json(progress_path,{'completed':index+1,'total':len(rows),'hits':sum(r['hit'] for r in results),'model_calls':getattr(agent,'model_calls',0)})
         if hasattr(agent,'close'):agent.close(sid)
         else:agent._sessions.pop(sid,None)
         if (index+1)%50==0:print('evaluated',index+1,'/',len(rows),flush=True)
@@ -68,7 +72,8 @@ def main():
     frozen_input=ARTIFACTS/f'quality/inputs/{args.split}-{args.variant}-{args.label or "full"}.jsonl'
     write_jsonl(frozen_input,rows)
     store,agent=build(args.variant);start=time.perf_counter()
-    try:results=evaluate(agent,rows,args.protocol,args.replay)
+    progress_path=ARTIFACTS/f'quality/progress/{args.variant}-{args.label}-{time.time_ns()}.json'
+    try:results=evaluate(agent,rows,args.protocol,args.replay,progress_path)
     finally:store.close()
     name='-'.join(filter(None,[args.split,args.variant,'protocol' if args.protocol else 'natural','replay' if args.replay else 'interactive',args.label]))
     groups=defaultdict(list);scenarios=defaultdict(list);categories=defaultdict(list)

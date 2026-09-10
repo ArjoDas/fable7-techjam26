@@ -20,16 +20,28 @@ def command(module,*args):
 def main():
     while not (ARTIFACTS/'datasets/semantic-audit.json').exists():time.sleep(2)
     command('extension.learned','train');command('extension.learned','score');command('extension.residual','--limit',400)
-    variants=('main','rules','hybrid','graph','tinybert','tinybert-100','tinybert-lexical','gated-tinybert','minilm-cross','learned','residual','rag','rag-passages','rag-local','rag-passages-local')
+    variants=('main','rules','hybrid','graph','tinybert','tinybert-100','tinybert-lexical','gated-tinybert','minilm-cross','learned','residual','rag','rag-passages','rag-local','rag-passages-local','corrected-lexical','rag-passages-corrected','rag-passages-local-corrected')
     for variant in variants:
         path=ARTIFACTS/f'quality/dev-{variant}-natural-interactive-canonical-dev.json'
         if not path.exists():command('extension.evaluate','--variant',variant,'--split','dev','--label','canonical-dev')
     # Local generative route is measured only after generation has stopped.
     command('extension.evaluate','--variant','local','--split','dev','--limit',100,'--label','local-deadline-screen')
-    command('extension.selection','freeze');command('extension.selection','confirm')
-    selection=json.loads((ARTIFACTS/'selection/frozen.json').read_text(encoding='utf-8'));candidate=selection['local_finalists'][0]
+    command('extension.selection','freeze')
+    selection=json.loads((ARTIFACTS/'selection/frozen.json').read_text(encoding='utf-8'))
+    for candidate in selection['local_finalists']:command('extension.rag_regression','--variant',candidate)
+    command('extension.selection','confirm')
+    candidate=selection['local_finalists'][0]
     command('extension.diagnostics','--variant',candidate)
     command('extension.load_campaign','--variant',candidate,'--confirm')
     command('extension.outcomes');command('extension.report')
+    # Release this campaign's model runtime and its temporary idle-sleep guard.
+    import psutil
+    runtime=ARTIFACTS/'runtime/model.json'
+    if runtime.exists():
+        owned=json.loads(runtime.read_text(encoding='utf-8'))
+        try:
+            process=psutil.Process(owned['pid'])
+            if process.cmdline()==owned['command']:process.terminate()
+        except psutil.Error:pass
 
 if __name__=='__main__':main()

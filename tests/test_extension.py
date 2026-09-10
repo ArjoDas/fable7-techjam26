@@ -118,6 +118,40 @@ class VectorTests(unittest.TestCase):
 
 
 class ServingTests(unittest.TestCase):
+    def test_bounded_queue_recovers_and_worker_failure_is_explicit(self):
+        from extension.service import Pool
+        from concurrent.futures import ThreadPoolExecutor
+        import psutil
+        import time
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);path=root/'input.jsonl';write_jsonl(path,[product('A'),product('B','blue')])
+            store=Catalog(root/'store',path);store.close();pool=Pool(2,root/'store',capacity=1,variant='rules')
+            suspended=None
+            try:
+                deadline=time.monotonic()+30
+                while len(pool.ready)<2 and time.monotonic()<deadline:time.sleep(.05)
+                self.assertEqual(len(pool.ready),2)
+                suspended=psutil.Process(pool.workers[0].pid);suspended.suspend()
+                def request(i):
+                    return pool.submit({'operation':'reset','session_id':str(i),'timeout_seconds':.3},slot=0)['status']
+                with ThreadPoolExecutor(max_workers=4) as executor:statuses=list(executor.map(request,range(4)))
+                self.assertIn(429,statuses);self.assertIn(504,statuses)
+                self.assertTrue(set(statuses)<={429,504})
+                suspended.resume();suspended=None
+                # A previously queued request must drain after resumption.
+                deadline=time.monotonic()+5;recovered=None
+                while time.monotonic()<deadline:
+                    recovered=pool.submit({'operation':'reset','session_id':'recovered'},slot=0)
+                    if recovered['status']==200:break
+                    time.sleep(.05)
+                self.assertEqual(recovered['status'],200)
+                pool.workers[0].terminate();pool.workers[0].join(timeout=5)
+                self.assertEqual(pool.submit({'operation':'reset','session_id':'failed'},slot=0)['status'],503)
+                self.assertEqual(pool.submit({'operation':'reset','session_id':'healthy'},slot=1)['status'],200)
+            finally:
+                if suspended is not None:suspended.resume()
+                pool.close()
+
     def test_workers_acknowledge_and_revalidate_cached_retry(self):
         from extension.service import Pool
         import time

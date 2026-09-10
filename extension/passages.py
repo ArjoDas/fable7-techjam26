@@ -41,7 +41,7 @@ class PassageIndex:
         self.db=sqlite3.connect(folder/'vectors.sqlite');self.db.execute('CREATE TABLE IF NOT EXISTS vectors(hash TEXT PRIMARY KEY,vector BLOB NOT NULL)')
         base=ARTIFACTS/'vectors/passages/cache.sqlite'
         self.base=sqlite3.connect(f'file:{base.as_posix()}?mode=ro',uri=True) if base.exists() else None
-        self.product_vectors={};self.product_hashes={};self.sync(catalog)
+        self.product_vectors={};self.product_hashes={};self.delta={};self.sync(catalog)
     def _encode(self,texts):
         if self.encoder is None:
             from extension.models import Embeddings
@@ -62,25 +62,56 @@ class PassageIndex:
         return np.stack([result[key(t)] for t in texts])
     def sync(self,catalog):
         if self.version==catalog.version:return
-        if self.version<0:affected=set(catalog.products)
+        initializing=self.version<0
+        if initializing:affected=set(catalog.products)
         else:
             affected=set()
             for payload, in catalog.db.execute('SELECT events FROM events WHERE version>?',(self.version,)):affected.update(json.loads(payload)['changed'])
         for a in affected:
             product=catalog.products.get(a)
-            if product is None or not product.get('available',True):self.product_vectors.pop(a,None);self.product_hashes.pop(a,None);continue
-            texts=passages(product);hashes=tuple(map(key,texts))
-            if self.product_hashes.get(a)!=hashes:self.product_vectors[a]=self.vectors(texts);self.product_hashes[a]=hashes
-        # Repacking stored vectors is not re-encoding catalog text.
-        self.ids=sorted(self.product_vectors);self.owners=np.concatenate([np.full(len(self.product_vectors[a]),i,dtype='int32') for i,a in enumerate(self.ids)]) if self.ids else np.array([],dtype='int32')
-        self.matrix=np.concatenate([self.product_vectors[a] for a in self.ids]) if self.ids else np.empty((0,384),dtype='float32')
+            if product is None or not product.get('available',True):
+                self.product_vectors.pop(a,None);self.product_hashes.pop(a,None)
+            else:
+                texts=passages(product);hashes=tuple(map(key,texts))
+                if self.product_hashes.get(a)!=hashes:self.product_vectors[a]=self.vectors(texts);self.product_hashes[a]=hashes
+            if not initializing:
+                position=self.base_positions.get(a)
+                reusable=a in self.product_hashes and self.base_hashes.get(a)==self.product_hashes[a]
+                if position is not None:self.base_active[position]=reusable
+                if a in self.product_vectors and not reusable:self.delta[a]=self.product_vectors[a]
+                else:self.delta.pop(a,None)
+        self.ids=sorted(self.product_vectors)
+        if initializing:self.compact()
+        else:self._pack_delta()
         self.version=catalog.version;self.cache.clear()
+
+    @staticmethod
+    def _pack(ids,vectors):
+        owners=np.concatenate([np.full(len(vectors[a]),i,dtype='int32') for i,a in enumerate(ids)]) if ids else np.array([],dtype='int32')
+        matrix=np.concatenate([vectors[a] for a in ids]) if ids else np.empty((0,384),dtype='float32')
+        return owners,matrix
+
+    def _pack_delta(self):
+        self.delta_ids=sorted(self.delta);self.delta_owners,self.delta_matrix=self._pack(self.delta_ids,self.delta)
+
+    def compact(self):
+        """Merge stored vectors without invoking the encoder; never per-event."""
+        self.base_ids=sorted(self.product_vectors);self.base_positions={a:i for i,a in enumerate(self.base_ids)}
+        self.base_hashes=dict(self.product_hashes);self.base_active=np.ones(len(self.base_ids),dtype=bool)
+        self.owners,self.matrix=self._pack(self.base_ids,self.product_vectors)
+        self.delta={};self._pack_delta();self.cache.clear()
     def search(self,query,k=100,catalog=None):
         self.sync(catalog or self.catalog)
         cachekey=(query,k,self.version)
         if cachekey in self.cache:return self.cache[cachekey]
-        query_vector=self._encode([query])[0];scores=np.full(len(self.ids),-np.inf,dtype='float32')
-        np.maximum.at(scores,self.owners,self.matrix@query_vector)
+        query_vector=self._encode([query])[0];base_scores=np.full(len(self.base_ids),-np.inf,dtype='float32')
+        np.maximum.at(base_scores,self.owners,self.matrix@query_vector)
+        values={a:float(base_scores[i]) for i,a in enumerate(self.base_ids) if self.base_active[i]}
+        if self.delta_ids:
+            delta_scores=np.full(len(self.delta_ids),-np.inf,dtype='float32')
+            np.maximum.at(delta_scores,self.delta_owners,self.delta_matrix@query_vector)
+            values.update(zip(self.delta_ids,map(float,delta_scores)))
+        scores=np.array([values[a] for a in self.ids],dtype='float32')
         indices=np.argsort(-scores,kind='stable')[:k];result=[self.ids[i] for i in indices]
         if len(self.cache)>=512:self.cache.clear()
         self.cache[cachekey]=result;return result
