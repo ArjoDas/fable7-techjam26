@@ -106,7 +106,7 @@ class Agent:
         ambiguity_release_turn: int = 10,
         dialogue_rating_weight: float = 0.0,
         use_safe_refutation: bool = True,
-        use_safe_exhaustion: bool = False,
+        use_safe_exhaustion: bool = True,
     ) -> None:
         self._use_safe_refutation = use_safe_refutation
         self._use_safe_exhaustion = use_safe_exhaustion

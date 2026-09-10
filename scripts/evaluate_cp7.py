@@ -143,12 +143,55 @@ def compare(before: dict, after: dict) -> dict:
     return {"regressions": regressions, "improved_sessions": gains, "turns_saved": turns_saved}
 
 
+def report() -> None:
+    """Export aggregate-only evidence, rechecking cached paired acceptance gates."""
+    records = []
+    failures = 0
+    case_count = 0
+    for suite in SUITES:
+        cached = {v: json.loads((ROOT / v / f"{suite}.json").read_text())
+                  for v in ("baseline", "reference", "singleton", "combined")}
+        parity = cached["baseline"]["response_digest"] == cached["reference"]["response_digest"]
+        failures += int(not parity)
+        case_count += len(cached["baseline"]["sessions"])
+        metrics = {}
+        for variant, result in cached.items():
+            metrics[variant] = {k: v for k, v in result.items() if k != "sessions"}
+            failures += result["agent_exceptions"]
+        checks = {
+            "reference_vs_cp6": compare(cached["baseline"], cached["reference"]),
+            "singleton_vs_cp6": compare(cached["baseline"], cached["singleton"]),
+            "combined_vs_cp6": compare(cached["baseline"], cached["combined"]),
+            "combined_vs_singleton": compare(cached["singleton"], cached["combined"]),
+        }
+        failures += sum(c["regressions"] for c in checks.values())
+        records.append({"suite": suite, "exact_disabled_response_parity": parity,
+                        "metrics": metrics, "paired_checks": checks})
+    ablations = []
+    for path in sorted((ROOT / "batching").glob("*_summary.json")):
+        row = json.loads(path.read_text())
+        failures += row["vs_baseline"]["regressions"] + row["agent_exceptions"]
+        ablations.append(row)
+    if failures:
+        raise SystemExit(f"Cannot promote: {failures} acceptance violations")
+    payload = {
+        "status": "accepted", "benchmark_cases": case_count,
+        "regressions": 0, "baseline_manifest": json.loads((ROOT / "manifest.json").read_text()),
+        "runtime_source_sha256": {str(p): digest(p) for p in sorted(Path("starter").glob("*.py"))},
+        "configuration": {"use_safe_refutation": True, "use_safe_exhaustion": True},
+        "suites": records, "batching_only_development_ablations": ablations,
+    }
+    write_json(Path("docs/cp7_validation.json"), payload)
+    print(json.dumps({"status": "accepted", "cases": case_count, "regressions": 0}))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--freeze", action="store_true")
     parser.add_argument("--variants", default="baseline")
     parser.add_argument("--suites", default=",".join(SUITES))
     parser.add_argument("--compare-to", default="baseline")
+    parser.add_argument("--report", action="store_true", help="validate cached outcomes and export aggregate evidence")
     args = parser.parse_args()
     if args.freeze:
         freeze()
@@ -156,6 +199,9 @@ def main() -> None:
     for path, expected in manifest["hashes"].items():
         if digest(path) != expected:
             raise SystemExit(f"Frozen input changed: {path}")
+    if args.report:
+        report()
+        return
     ids, categories, products = catalog_index("data/catalog.jsonl")
     split = json.loads(Path("data/cp2_split.json").read_text())
     failures = 0

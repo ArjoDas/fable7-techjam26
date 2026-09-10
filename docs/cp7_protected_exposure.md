@@ -10,6 +10,29 @@ before an intent override do not establish misses; the override clears actual
 exposure memory. Unknown wording or nonconsecutive turns permanently disables the
 extra policy for that session. Boundary refusal is not evidence exhaustion.
 
+## Measured results
+
+| Suite | CP6 score | CP7 score | CP6 MTTC | CP7 MTTC | Regressions |
+|---|---:|---:|---:|---:|---:|
+| Public 200 | 0.978000 | 0.978600 | 2.100 | 2.070 | 0 |
+| synthetic_dev | 0.970712 | 0.972667 | 2.400 | 2.330 | 0 |
+| hard | 0.815892 | 0.854222 | 4.302 | 4.002 | 0 |
+| synthetic_holdout | 0.970855 | 0.972570 | 2.446 | 2.364 | 0 |
+| fresh_weighted | 0.965300 | 0.969688 | 2.535 | 2.450 | 0 |
+| fresh_uniform | 0.946300 | 0.953589 | 2.835 | 2.750 | 0 |
+| paraphrase | 0.881066 | 0.881066 | 2.070 | 2.070 | 0 |
+
+Public HitRate@10 and MRR remain 1.0. Hard-set hit rate improves from
+0.856 to 0.912 (28 recovered misses). Across 3,300 cases, 214 sessions improve
+and 342 turns are saved, with zero per-session regressions against CP6 or the
+singleton-only policy. Disabled-policy responses match the independent baseline
+exactly on every suite. All agents report zero exceptions; 33 unit tests pass.
+Paraphrase results are unofficial; its complete response digest is unchanged.
+
+The [aggregate validation artifact](cp7_validation.json) includes hashes, scenario
+metrics, paired comparisons, and isolated batching ablations. Holdout results
+were confirmed after freezing the policy; no holdout cases were used to tune it.
+
 ## Protection argument
 
 Under the published simulator, the next customer disclosure depends on the

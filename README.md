@@ -6,14 +6,14 @@ customer's hidden target product among 50,000 catalog items. On the released
 
 | HitRate@10 | MRR | MTTC | TechnicalScore |
 |---:|---:|---:|---:|
-| **1.000** | **1.000** | **2.10** | **0.978** |
+| **1.000** | **1.000** | **2.07** | **0.9786** |
 
 Every session finds its target, always at rank 1 in the returned list, in
 about two turns on average — with no LLM, no network access, no API keys, no
 GPU, and zero reported token usage at inference time. The complete experiment
-history behind this result (six checkpoints, all accepted and rejected
-variants, and the parallel unmerged branch lines) is in
-[`EXPERIMENTS.md`](EXPERIMENTS.md).
+history through CP6 is in [`EXPERIMENTS.md`](EXPERIMENTS.md). CP7 adds
+protected exposure with a strict per-session regression gate; its design and
+reproduction commands are in [the CP7 report](docs/cp7_protected_exposure.md).
 
 ## The Challenge
 
@@ -47,9 +47,11 @@ submission policy.
 ## Our Solution
 
 The agent (in `starter/`) is a layered retrieval funnel with
-confidence-qualified output. All indexes are built once at startup from
+confidence-qualified output and a protected exposure policy. All indexes are built once at startup from
 `data/catalog.jsonl` alone; runtime code never reads targets, labels, or
 evaluator internals.
+
+The diagram shows the retained CP6 reference policy plus the CP7 output layer.
 
 ```mermaid
 flowchart TD
@@ -84,8 +86,10 @@ flowchart TD
     narrow -- "Yes" --> one["Return exactly 1 product"]
     narrow -- "No" --> ten["Return up to 10 products"]
 
-    one --> out["Record what was shown, then reply with the<br/>open question, ask_attribute = other"]
-    ten --> out
+    one --> reference["Advance independent CP6 reference history"]
+    ten --> reference
+    reference --> protect["Replace refuted singleton guesses;<br/>after exhaustion, append only otherwise missed products"]
+    protect --> out["Record actual exposures, then reply with the<br/>open question, ask_attribute = other"]
     out -. "evaluator answers, turn N+1" .-> msg
 ```
 
@@ -136,19 +140,27 @@ flowchart TD
    training pipeline, and runtime wrapper are preserved on the
    `sri-experiment-cp4` branch).
 
+9. **Protected exposure (CP7).** Keep CP6’s reference history independent of
+   actual recommendations. Replace only proven-wrong singleton guesses, and
+   remove confirmed misses before final-turn backfilling. After explicit
+   exhaustion, spare positions may expose matching products absent from every
+   future CP6 and singleton-only slate. Pre-override exposures never establish
+   misses; unsupported wording disables this layer. The auxiliary matching
+   cohort has no 80-product cap and deduplicates normalized observations.
+
 ### Results by scenario (public 200)
 
 | Scenario | Sessions | HitRate@10 | MRR | MTTC |
 |---|---:|---:|---:|---:|
-| Buying | 80 | 1.0 | 1.0 | 1.55 |
-| Browsing | 80 | 1.0 | 1.0 | 1.99 |
+| Buying | 80 | 1.0 | 1.0 | 1.525 |
+| Browsing | 80 | 1.0 | 1.0 | 1.9375 |
 | Intent Override | 30 | 1.0 | 1.0 | 3.73 |
 | Boundary | 10 | 1.0 | 1.0 | 2.50 |
 
 ### How we got here
 
-Six evaluated checkpoints, each with frozen holdout and target-disjoint
-synthetic validation (full ledger in [`EXPERIMENTS.md`](EXPERIMENTS.md)):
+Seven evaluated checkpoints with holdout and target-disjoint validation
+([CP1–CP6 ledger](EXPERIMENTS.md), [CP7 report](docs/cp7_protected_exposure.md)):
 
 | Checkpoint | Key change | TechnicalScore |
 |---|---|---:|
@@ -158,14 +170,17 @@ synthetic validation (full ledger in [`EXPERIMENTS.md`](EXPERIMENTS.md)):
 | CP3 | Exact-evidence funnel, 16-feature reranker, coverage rotation | 0.932620 |
 | CP4 | Intent-gated fine-tuned TinyBERT cross-encoder | 0.933320 |
 | CP5 | Ordered dialogue cards + Top-1 abstention under ambiguity | 0.977200 |
-| CP6 | Exact category-scoped retrieval (after a 15-repository audit) | **0.978000** |
+| CP6 | Exact category-scoped retrieval (after a 15-repository audit) | 0.978000 |
+| CP7 | Protected singleton replacement and exhausted-cohort coverage | **0.978600** |
 
 Every change that lowered the score was reverted and recorded, including
 dense retrieval, wider candidate pools, per-mode ranking heads, fixed-turn
 release policies, and average-rating priors. Validation discipline: tuning
 only on a 150-session development partition, one-shot aggregate-only holdout
 checks after freezing each configuration, and seeded synthetic session sets
-whose targets are disjoint from all 200 public targets.
+whose targets are disjoint from all 200 public targets. CP7 additionally requires
+zero per-session regressions in hit status, reciprocal rank, and first-hit turn;
+aggregate improvements cannot compensate for a worse individual case.
 
 ### Model choice, cost, and feasibility
 
@@ -202,8 +217,8 @@ python3 -m evaluator.local_evaluator
 This runs all 200 public sessions against the agent in `starter/agent.py` and
 writes per-session results and aggregate metrics to `results.json`. The run is
 deterministic; the aggregates should reproduce the headline result exactly:
-`hit_rate_at_10: 1.0`, `mrr: 1.0`, `mttc: 2.1`,
-`recommended_technical_score: 0.978`. Do not edit the evaluator or public
+`hit_rate_at_10: 1.0`, `mrr: 1.0`, `mttc: 2.07`,
+`recommended_technical_score: 0.9786`. Do not edit the evaluator or public
 labels when reporting a local score.
 
 **3. Run the tests.**
@@ -291,15 +306,14 @@ leans on that.
   constraint whose own tokens are reworded (say, "crimson" for a catalog value
   of "red"). Dense retrieval and a fine-tuned cross-encoder were both built
   and measured, and both lost to exact matching *on this protocol* — but on a
-  noisier private set that trade-off could reverse, and we would revisit the
+  noisier real-user conversation that trade-off could reverse, and we would revisit the
   neural fallback first.
-- **Irreducible ties.** The remaining errors are groups of products that are
-  observationally identical given every disclosable attribute; one synthetic
-  target sits at popularity rank 18 inside a 29-product equivalence class and
-  no ranking can find it sooner. A smarter question policy (asking the
-  attribute that maximally splits the current candidate group — prototyped on
-  an unmerged branch at a measured cost of −0.001) is the principled fix we
-  would pursue with more time.
+- **Irreducible ties.** Products can share every disclosable card value, so
+  no additional question can distinguish them once the card is exhausted.
+  CP7 improves coverage by using spare positions for products the protected
+  policies would otherwise miss. Some large ties still exceed the ten-turn
+  budget; the policy preserves existing successes instead of trading away
+  their reciprocal rank to maximize aggregate expected score.
 - **Cold start.** Building the FTS5, exact-value, card, and category indexes
   takes about 44 seconds. Fine for a one-shot evaluation, but a service
   deployment should serialize the prebuilt indexes instead of rebuilding them
