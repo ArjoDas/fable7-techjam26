@@ -10,6 +10,14 @@ def main():
         decisions.append({'alternative':path.stem,'decision':'retain' if passed else 'reject','scope':'Catalog-index component','reason':'Independent full-rebuild parity at this checkpoint','passed':passed})
     for path in (HOME/'adjustment').glob('*.json'):
         d=json.loads(path.read_text(encoding='utf-8'));decisions.append({'alternative':'batch-residual-'+path.stem,'decision':d['outcome'],'scope':'Separate development adjustment; main weights frozen'})
+    for path in (HOME/'embedding-work').glob('*/result.json'):
+        d=json.loads(path.read_text(encoding='utf-8'));passed=d['deletion_removed'] and d['delete_reintroduce_compact_encodes']==0
+        decisions.append({'alternative':'incremental-passage-encoding-'+path.parent.name,'decision':'retain' if passed else 'reject','scope':'Encoding-work component; query quality is evaluated separately'})
+    selection=HOME/'selection.json'
+    if selection.exists():
+        finalists=json.loads(selection.read_text(encoding='utf-8'))['finalists']
+        for variant in ('rules','qwen','semantic'):
+            decisions.append({'alternative':variant,'decision':'retain' if variant in finalists else 'reject','scope':'Development selection only; retention is not release approval','reason':'Selected converter/direct-semantic comparator' if variant in finalists else 'Lower converter development recovery'})
     results=defaultdict(list)
     for path in (HOME/'quality').glob('*.json'):
         d=json.loads(path.read_text(encoding='utf-8'));c=d['manifest']['config']

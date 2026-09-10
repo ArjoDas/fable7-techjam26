@@ -50,5 +50,15 @@ def main():
     write_json(HOME/'serving-selection.json',{'variant':variant,'development_scores':scores,'sealed_results_not_used_for_selection':True})
     run(variant,True)
     result=json.loads((ARTIFACTS/'load/final-confirmation.json').read_text(encoding='utf-8'));write_json(HOME/'load-confirmation.json',result)
+    # All model measurements are finished; release only this task's owned runtime
+    # so its process-scoped idle-sleep guard does not outlive the campaign.
+    import psutil
+    runtime=ARTIFACTS/'runtime/model.json'
+    if runtime.exists():
+        owned=json.loads(runtime.read_text(encoding='utf-8'))
+        try:
+            process=psutil.Process(owned['pid'])
+            if process.cmdline()==owned['command']:process.terminate()
+        except psutil.Error:pass
 
 if __name__=='__main__':main()

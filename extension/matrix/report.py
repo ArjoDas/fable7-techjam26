@@ -18,11 +18,13 @@ def main():
         if optimized.exists():timing+=f" → {json.loads(optimized.read_text(encoding='utf-8'))['incremental_seconds']:.3f} optimized"
         lines.append(f"| {c['schedule']} | {c['size']} | {d['added']} | {timing} | {d['parity']['rebuild_seconds']:.3f} | {len(d['parity']['conversation_mismatches'])} |")
     lines+=['','Zero-addition rows describe initial checkpoints; their update column is not initial preprocessing time. Startup and clean-cache embedding work are recorded separately.','',
-        '## Query comparisons','','| Catalog | Size | Language | Variant | Split / phase | Seed | Tasks | Hit10 by 5 | Recall100 by 5 | MRR | MTTC |','|---|---:|---|---|---|---:|---:|---:|---:|---:|---:|']
+        '## Query comparisons','','<details><summary>All measured query runs, including historical screens</summary>','','| Catalog | Size | Language | Variant | Split / phase / mode | Seed | Tasks | Hit10 by 5 | Recall100 by 5 | MRR | MTTC |','|---|---:|---|---|---|---:|---:|---:|---:|---:|---:|']
     compact=[]
     for path in sorted((HOME/'quality').glob('*.json')):
         d=json.loads(path.read_text(encoding='utf-8'));c=d['manifest']['config'];a=d['aggregate'];compact.append({k:v for k,v in d.items() if k!='sessions'})
-        lines.append(f"| {c['schedule']} | {c['size']} | {c['level']} | {c['variant']} | {c['split']} / {c['label']} | {c['seed']} | {a['sample_count']} | {a['hit10_by_turn5']:.2%} | {a['recall100_by_turn5']:.2%} | {a['mrr']:.4f} | {a['mttc']} |")
+        mode='replay' if c.get('replay') else 'interactive'
+        lines.append(f"| {c['schedule']} | {c['size']} | {c['level']} | {c['variant']} | {c['split']} / {c['label']} / {mode} | {c['seed']} | {a['sample_count']} | {a['hit10_by_turn5']:.2%} | {a['recall100_by_turn5']:.2%} | {a['mrr']:.4f} | {a['mttc']} |")
+    lines+=['','</details>','']
     lines+=['','## Interpretation and outstanding evidence','','Three seeds reuse product tasks and are not independent samples. Paired confidence intervals cluster by product. Semantic generation fallbacks and AI audit flags remain in the denominator. Existing broad-campaign results are historical, not measurements of this matrix.','']
     for name,path in [('Semantic paraphrase bank',HOME/'paraphrases/manifest.json'),('200-example equivalence audit',HOME/'paraphrases/audit.json'),('Frozen finalists',HOME/'selection.json'),('Sealed paired comparison',HOME/'paired-sealed.json'),('Load confirmation',HOME/'load-confirmation.json')]:lines.append(f"- {name}: {'recorded; inspect artifact gates' if path.exists() else 'pending'}.")
     examples=[]
