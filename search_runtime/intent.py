@@ -297,14 +297,30 @@ def parse(text, state, converter, turn, deadline):
                 operator_clause,
             )
         )
-        # Mode negation is not a product exclusion.
-        if re.search(r"not ready|no particular|no preference", clause):
+        # Mode negation and undecided fillers are not product exclusions.
+        if re.search(
+            r"not ready|not sure|no particular|no preference|undecided|no idea|just looking",
+            clause,
+        ):
             continue
         evidence_clause = clause
         for c in sorted(categories, key=len, reverse=True):
             evidence_clause = evidence_clause.replace(c, "")
         values, shortlist = converter.evidence(evidence_clause)
-        if not values and re.fullmatch(r"(?:can you find|i need|i am browsing|show me some|i'm looking for|i want|i am looking for|please find|forget|switch to)\s*", evidence_clause.strip()):
+        # Bare function words can exist as catalog evidence values; never
+        # accept them as a preference on their own.
+        values = [
+            v
+            for v in values
+            if v
+            not in ("for", "and", "the", "with", "from", "also", "some", "yet", "of")
+        ]
+        if not values and re.fullmatch(
+            r"(?:just\s+|also\s+)?"
+            r"(?:can you find|i need|i am browsing|(?:i'm\s+|i am\s+)?brows\w+|looking around|show me some|i'm looking for|i want|i am looking for|please find|forget|switch to)?"
+            r"\s*(?:for|some|around)?\s*",
+            evidence_clause.strip(),
+        ):
             continue
         if not values and matcher:
             phrase = re.sub(

@@ -2,7 +2,10 @@
 
 import type { AgentTrace, ProductCard, TurnResponse } from "@/lib/contracts";
 
-function decisionCopy(trace: AgentTrace): { word: string; tone: string; explain: string } {
+function decisionCopy(
+  trace: AgentTrace,
+  targetShownFirst: boolean,
+): { word: string; tone: string; explain: string } {
   const selection = trace.selection;
   if (selection.decision === "rotation") {
     return {
@@ -13,12 +16,20 @@ function decisionCopy(trace: AgentTrace): { word: string; tone: string; explain:
     };
   }
   if (selection.decision === "abstain_1") {
+    if (targetShownFirst) {
+      return {
+        word: "Best pick, then ask",
+        tone: "abstain",
+        explain:
+          "The agent leads with its single strongest candidate, which is already the target, and asks one clarifying question to be certain before committing a full list.",
+      };
+    }
     return {
-      word: "Abstain & ask",
+      word: "Ask before guessing",
       tone: "abstain",
       explain: selection.opening_abstention_used
-        ? "Opening turn: rather than guessing ten products from one clue, the agent shows its single best candidate and asks for another requirement."
-        : "Several products still match every disclosed clue, so the agent returns one candidate and asks a clarifying question instead of filling ten slots.",
+        ? "One clue is not enough to fill ten slots honestly, so the agent shows its single best candidate and asks for another requirement."
+        : "Several products still match every disclosed clue, so the agent shows one candidate and asks a clarifying question instead of padding the list.",
     };
   }
   return {
@@ -38,7 +49,10 @@ export function DecisionStage({
   response: TurnResponse;
   targetAsin: string | null;
 }) {
-  const copy = decisionCopy(trace);
+  const targetShownFirst =
+    targetAsin !== null &&
+    response.recommendations[0]?.parent_asin === targetAsin;
+  const copy = decisionCopy(trace, targetShownFirst);
   return (
     <div>
       <div className="decision-banner">
