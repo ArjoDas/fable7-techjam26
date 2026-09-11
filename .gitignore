@@ -28,3 +28,6 @@ tests/test_organizer_pipeline.py
 
 .venv-embed/
 dev-assets/
+
+# Retained local verification catalogs, caches, and raw turns.
+/data/search/

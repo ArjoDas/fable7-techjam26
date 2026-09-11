@@ -1,0 +1,332 @@
+{
+  "official_wrapper": {
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 1.0,
+    "mttc": 2.1,
+    "efficiency": 0.89,
+    "recommended_technical_score": 0.978,
+    "reported_token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 10,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 2.5
+      },
+      "browsing": {
+        "sample_count": 80,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.9875
+      },
+      "buying": {
+        "sample_count": 80,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.55
+      },
+      "intent_override": {
+        "sample_count": 30,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 3.733333
+      }
+    },
+    "hit_by_turn5": 0.99,
+    "recall100_by_turn5": 0.995,
+    "route_counts": {
+      "protocol": 420
+    },
+    "model_calls": 0,
+    "errors": 0,
+    "literal_fallback_turns": 0,
+    "manifest": {
+      "config": {
+        "catalog": "data/catalog.jsonl",
+        "samples": "data/public_set.jsonl",
+        "templates": "tests/language_templates.json",
+        "bank": "data/releases/extension-v1/matrix/paraphrases/bank.json",
+        "store": "data/search/minilm-frontend-verification",
+        "output": "data/search/verification-fixed-constrained.json",
+        "level": "constrained",
+        "seed": 20260910
+      },
+      "catalog_size": 50000,
+      "label": "official compatibility",
+      "input_hashes": {
+        "catalog": "b74446b8074ca4f9f83a6041673377ba24af93d853c907bfe92e9a405c40c7b0",
+        "samples": "571359a8a69014c43fc30d39c996c4a28e875dccc249dffc707358757beb16c0",
+        "templates": "4affff70f210b9bea60b2e58ca795312e7e3879ebd06f1bfd4b2224a3cd22211",
+        "bank": "4f4bf9a003a1bfcc5d1e657959b8030c4c9f8375bbad6658d676a026f49b61f0"
+      },
+      "source_hashes": {
+        "extension\\catalog.py": "6eae43879a080578ffd711fa5d24323d715b71962eb1f7d9884a60b852a24ef2",
+        "extension\\check_public.py": "8cea0144b993929c7e5cae503e8f7c967005a26e51886e298ab8859584be64de",
+        "extension\\common.py": "ce55503c00630684e3a8dc9cc5d8ddb7d7922223f9947045a907b8ca88302592",
+        "extension\\events.py": "dc00be72015e54d24acd40535a47fae26e02084f848701eb965c63b757a03222",
+        "extension\\factory.py": "cc6e28739b22b2f1e6b9dea6618a607e3b76e7925db65442975beadeb756bb7a",
+        "extension\\index.py": "6fc9428ba677081c7809b5b712bcbb108c98f80c20bc0de115a8c451bbcb83cb",
+        "extension\\ingest.py": "d56e26db639b9a18876d2824e79dd0c5bdf67c9892e7b4ef9335d62d6a284367",
+        "extension\\intent.py": "cd9e6b02c43fb43a3e5a45f40b70b80ad05cacd6ca5e30e7f7377fbd96b54f57",
+        "extension\\models.py": "f41e9c0739467e6db9b0b3d4def21fed6688268e0731165e932c7095308ee992",
+        "extension\\passages.py": "e34d7cead60a2f3edd942ba89d10a91ca4023ccb7fe52d7fa50024fed4390633",
+        "extension\\protocol.py": "50fd3275671ae0041e2659c92a199a67e9316afa0b5ceaf3e3f2bb85b48b58f4",
+        "extension\\service.py": "5baa00ae8fb4d4dd92d3af44b757b77d903c9f9e497e3404fb0f62f1b7fbaf73",
+        "extension\\translate.py": "c76de025c0d3f80da6e3fe235146e7eb4861b4c18dd956540f41fdbd25c2a973",
+        "extension\\__init__.py": "a424efafb96bb9e7bb3b63099ac6667934ff7bbf49fe3bb63671f45f6c422c35"
+      }
+    },
+    "raw_file": "data\\search\\verification-fixed-constrained.json",
+    "raw_sha256": "a2f6ba5b5377d775ae9f02e391fe84abdcc758241c1bec80d9b6745cbfd7397c",
+    "turn_count": 420,
+    "fallback_reasons": {}
+  },
+  "official_http": {
+    "sample_count": 200,
+    "hit_rate_at_10": 1.0,
+    "mrr": 1.0,
+    "mttc": 2.1,
+    "efficiency": 0.89,
+    "recommended_technical_score": 0.978,
+    "reported_token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 10,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 2.5
+      },
+      "browsing": {
+        "sample_count": 80,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.9875
+      },
+      "buying": {
+        "sample_count": 80,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.55
+      },
+      "intent_override": {
+        "sample_count": 30,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 3.733333
+      }
+    },
+    "model_calls": 0,
+    "raw_file": "data\\search\\verification-api-public.json",
+    "raw_sha256": "e39b591fbc4700b8f6ef97ce481ac81d359d6b30c3b143dd6921f2cb68a920e8"
+  },
+  "wording": {
+    "sample_count": 200,
+    "hit_rate_at_10": 0.995,
+    "mrr": 0.966139,
+    "mttc": 2.11,
+    "efficiency": 0.889,
+    "recommended_technical_score": 0.965142,
+    "reported_token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 10,
+        "hit_rate_at_10": 0.9,
+        "mrr": 0.9,
+        "mttc": 3.3
+      },
+      "browsing": {
+        "sample_count": 80,
+        "hit_rate_at_10": 1.0,
+        "mrr": 0.943472,
+        "mttc": 1.95
+      },
+      "buying": {
+        "sample_count": 80,
+        "hit_rate_at_10": 1.0,
+        "mrr": 1.0,
+        "mttc": 1.55
+      },
+      "intent_override": {
+        "sample_count": 30,
+        "hit_rate_at_10": 1.0,
+        "mrr": 0.958333,
+        "mttc": 3.633333
+      }
+    },
+    "hit_by_turn5": 0.985,
+    "recall100_by_turn5": 0.995,
+    "route_counts": {
+      "translated-protocol": 351,
+      "minilm-rules": 52,
+      "raw-lexical-fallback": 18
+    },
+    "model_calls": 68,
+    "errors": 0,
+    "literal_fallback_turns": 0,
+    "manifest": {
+      "config": {
+        "catalog": "data/catalog.jsonl",
+        "samples": "data/public_set.jsonl",
+        "templates": "tests/language_templates.json",
+        "bank": "data/releases/extension-v1/matrix/paraphrases/bank.json",
+        "store": "data/search/minilm-final-verification",
+        "output": "data/search/verification-final-wording.json",
+        "level": "wording",
+        "seed": 20260910
+      },
+      "catalog_size": 50000,
+      "label": "experimental public-task paraphrases (historical targets)",
+      "input_hashes": {
+        "catalog": "b74446b8074ca4f9f83a6041673377ba24af93d853c907bfe92e9a405c40c7b0",
+        "samples": "571359a8a69014c43fc30d39c996c4a28e875dccc249dffc707358757beb16c0",
+        "templates": "4affff70f210b9bea60b2e58ca795312e7e3879ebd06f1bfd4b2224a3cd22211",
+        "bank": "4f4bf9a003a1bfcc5d1e657959b8030c4c9f8375bbad6658d676a026f49b61f0"
+      },
+      "source_hashes": {
+        "extension\\catalog.py": "6eae43879a080578ffd711fa5d24323d715b71962eb1f7d9884a60b852a24ef2",
+        "extension\\check_public.py": "8cea0144b993929c7e5cae503e8f7c967005a26e51886e298ab8859584be64de",
+        "extension\\common.py": "ce55503c00630684e3a8dc9cc5d8ddb7d7922223f9947045a907b8ca88302592",
+        "extension\\events.py": "dc00be72015e54d24acd40535a47fae26e02084f848701eb965c63b757a03222",
+        "extension\\factory.py": "cc6e28739b22b2f1e6b9dea6618a607e3b76e7925db65442975beadeb756bb7a",
+        "extension\\index.py": "6fc9428ba677081c7809b5b712bcbb108c98f80c20bc0de115a8c451bbcb83cb",
+        "extension\\ingest.py": "d56e26db639b9a18876d2824e79dd0c5bdf67c9892e7b4ef9335d62d6a284367",
+        "extension\\intent.py": "7d5a02d209e82c4f933cd5f895889e972dcedc14061faed9d77d98cdeded5a38",
+        "extension\\models.py": "f41e9c0739467e6db9b0b3d4def21fed6688268e0731165e932c7095308ee992",
+        "extension\\passages.py": "e34d7cead60a2f3edd942ba89d10a91ca4023ccb7fe52d7fa50024fed4390633",
+        "extension\\protocol.py": "50fd3275671ae0041e2659c92a199a67e9316afa0b5ceaf3e3f2bb85b48b58f4",
+        "extension\\service.py": "5baa00ae8fb4d4dd92d3af44b757b77d903c9f9e497e3404fb0f62f1b7fbaf73",
+        "extension\\translate.py": "c76de025c0d3f80da6e3fe235146e7eb4861b4c18dd956540f41fdbd25c2a973",
+        "extension\\__init__.py": "a424efafb96bb9e7bb3b63099ac6667934ff7bbf49fe3bb63671f45f6c422c35"
+      }
+    },
+    "raw_file": "data\\search\\verification-final-wording.json",
+    "raw_sha256": "11d6467be51d66ffe390da35cc9fd9249bde22326156dab1accd5d0a05dd93a7",
+    "turn_count": 421,
+    "fallback_reasons": {
+      "TimeoutError: MiniLM phrase deadline": 2,
+      "ValueError: Uncertain evidence; please clarify the preference": 16
+    }
+  },
+  "semantic": {
+    "sample_count": 200,
+    "hit_rate_at_10": 0.585,
+    "mrr": 0.427524,
+    "mttc": 5.65,
+    "efficiency": 0.535,
+    "recommended_technical_score": 0.527757,
+    "reported_token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "scenario_metrics": {
+      "boundary": {
+        "sample_count": 10,
+        "hit_rate_at_10": 0.6,
+        "mrr": 0.6,
+        "mttc": 6.1
+      },
+      "browsing": {
+        "sample_count": 80,
+        "hit_rate_at_10": 0.6375,
+        "mrr": 0.453814,
+        "mttc": 5.1375
+      },
+      "buying": {
+        "sample_count": 80,
+        "hit_rate_at_10": 0.6125,
+        "mrr": 0.421543,
+        "mttc": 5.075
+      },
+      "intent_override": {
+        "sample_count": 30,
+        "hit_rate_at_10": 0.366667,
+        "mrr": 0.315873,
+        "mttc": 8.4
+      }
+    },
+    "hit_by_turn5": 0.585,
+    "recall100_by_turn5": 0.84,
+    "route_counts": {
+      "raw-lexical-fallback": 299,
+      "minilm-rules": 730,
+      "translated-protocol": 18
+    },
+    "model_calls": 151,
+    "errors": 0,
+    "literal_fallback_turns": 184,
+    "manifest": {
+      "config": {
+        "catalog": "data/catalog.jsonl",
+        "samples": "data/public_set.jsonl",
+        "templates": "tests/language_templates.json",
+        "bank": "data/releases/extension-v1/matrix/paraphrases/bank.json",
+        "store": "data/search/minilm-final-verification",
+        "output": "data/search/verification-final-semantic.json",
+        "level": "semantic",
+        "seed": 20260910
+      },
+      "catalog_size": 50000,
+      "label": "experimental public-task paraphrases (historical targets)",
+      "input_hashes": {
+        "catalog": "b74446b8074ca4f9f83a6041673377ba24af93d853c907bfe92e9a405c40c7b0",
+        "samples": "571359a8a69014c43fc30d39c996c4a28e875dccc249dffc707358757beb16c0",
+        "templates": "4affff70f210b9bea60b2e58ca795312e7e3879ebd06f1bfd4b2224a3cd22211",
+        "bank": "4f4bf9a003a1bfcc5d1e657959b8030c4c9f8375bbad6658d676a026f49b61f0"
+      },
+      "source_hashes": {
+        "extension\\catalog.py": "6eae43879a080578ffd711fa5d24323d715b71962eb1f7d9884a60b852a24ef2",
+        "extension\\check_public.py": "8cea0144b993929c7e5cae503e8f7c967005a26e51886e298ab8859584be64de",
+        "extension\\common.py": "ce55503c00630684e3a8dc9cc5d8ddb7d7922223f9947045a907b8ca88302592",
+        "extension\\events.py": "dc00be72015e54d24acd40535a47fae26e02084f848701eb965c63b757a03222",
+        "extension\\factory.py": "cc6e28739b22b2f1e6b9dea6618a607e3b76e7925db65442975beadeb756bb7a",
+        "extension\\index.py": "6fc9428ba677081c7809b5b712bcbb108c98f80c20bc0de115a8c451bbcb83cb",
+        "extension\\ingest.py": "d56e26db639b9a18876d2824e79dd0c5bdf67c9892e7b4ef9335d62d6a284367",
+        "extension\\intent.py": "7d5a02d209e82c4f933cd5f895889e972dcedc14061faed9d77d98cdeded5a38",
+        "extension\\models.py": "f41e9c0739467e6db9b0b3d4def21fed6688268e0731165e932c7095308ee992",
+        "extension\\passages.py": "e34d7cead60a2f3edd942ba89d10a91ca4023ccb7fe52d7fa50024fed4390633",
+        "extension\\protocol.py": "50fd3275671ae0041e2659c92a199a67e9316afa0b5ceaf3e3f2bb85b48b58f4",
+        "extension\\service.py": "5baa00ae8fb4d4dd92d3af44b757b77d903c9f9e497e3404fb0f62f1b7fbaf73",
+        "extension\\translate.py": "c76de025c0d3f80da6e3fe235146e7eb4861b4c18dd956540f41fdbd25c2a973",
+        "extension\\__init__.py": "a424efafb96bb9e7bb3b63099ac6667934ff7bbf49fe3bb63671f45f6c422c35"
+      }
+    },
+    "raw_file": "data\\search\\verification-final-semantic.json",
+    "raw_sha256": "e082e07bafcb0f8a374eb86ed074c164e52d1b7070faa21a10836b25c50ee4eb",
+    "turn_count": 1047,
+    "fallback_reasons": {
+      "ValueError: Uncertain category; please name the product type": 263,
+      "ValueError: Uncertain evidence; please clarify the preference": 35,
+      "ValueError: No supported preference or shopping action found": 1
+    }
+  },
+  "environment": {
+    "python": "3.13.1 (tags/v3.13.1:0671451, Dec  3 2024, 19:06:28) [MSC v.1942 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.2",
+    "onnxruntime": "1.29.0",
+    "tokenizers": "0.23.2",
+    "fastapi": "0.141.1"
+  },
+  "artifact_hashes": {
+    "data\\catalog.jsonl": "b74446b8074ca4f9f83a6041673377ba24af93d853c907bfe92e9a405c40c7b0",
+    "data\\public_set.jsonl": "571359a8a69014c43fc30d39c996c4a28e875dccc249dffc707358757beb16c0",
+    "starter\\agent.py": "d65da29c49e6f5172c6cdf13c28afaf4e41e9d919834b4c7c18ee782cd635d44",
+    "evaluator\\local_evaluator.py": "84ea899707452de249ca62abee77c4b40ab7a3139b5cc798ac30c9f521f91b30",
+    "data\\releases\\real-world-v1\\models\\minilm\\onnx\\model_quint8_avx2.onnx": "b941bf19f1f1283680f449fa6a7336bb5600bdcd5f84d10ddc5cd72218a0fd21",
+    "data\\releases\\real-world-v1\\models\\minilm\\tokenizer.json": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037"
+  }
+}

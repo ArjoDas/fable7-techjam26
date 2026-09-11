@@ -1,0 +1,34 @@
+{
+  "opening": [
+    "I need {category}. The important part is {values}.",
+    "Can you find {category}? It needs to be {values}."
+  ],
+  "opening_old": [
+    "I need {category}. My preference is {values}.",
+    "Can you find {category}? I prefer {values}."
+  ],
+  "browse": [
+    "I am browsing {category}, with no particular choice yet.",
+    "Show me some {category}; I am still deciding."
+  ],
+  "disclosure": [
+    "My preferences are {values}.",
+    "What I care about is {values}."
+  ],
+  "override": [
+    "Change of plan: drop my previous preference. I need {values}.",
+    "Actually, replace what I said earlier with {values}."
+  ],
+  "boundary": [
+    "I am flexible about {attribute}; you can decide.",
+    "Please choose the {attribute} for me."
+  ],
+  "missing": [
+    "Nothing else to add about {attribute}.",
+    "No further requirements for {attribute}."
+  ],
+  "ask": [
+    "Could you ask about a specific attribute? These are not right yet.",
+    "These do not fit yet; ask me one specific question."
+  ]
+}

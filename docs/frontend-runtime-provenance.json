@@ -1,0 +1,72 @@
+{
+  "search_runtime\\catalog.py": {
+    "sha256": "6cdddec3f88b7616b1e13ee1b3939ec8218dbf6b90f107798e3f2604af020bd1",
+    "source": "extension-updated:extension/catalog.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\check_public.py": {
+    "sha256": "8a7fb17da98810ff9fc0bd09e7f5fbf2a4c512fb6723fb0d6d30bc33388696e1",
+    "source": "extension-updated:extension/check_public.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\common.py": {
+    "sha256": "ce55503c00630684e3a8dc9cc5d8ddb7d7922223f9947045a907b8ca88302592",
+    "source": "extension-updated:extension/common.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\events.py": {
+    "sha256": "dc00be72015e54d24acd40535a47fae26e02084f848701eb965c63b757a03222",
+    "source": "extension-updated:extension/events.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\factory.py": {
+    "sha256": "cb67ac18a9b972f45541ac5b0856c6f88b8437b11aa6d33ec55a7b776be666a3",
+    "source": "extension-updated:extension/factory.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\index.py": {
+    "sha256": "0d885558d60fd11a0cbc9caf526e4f5eb1d680e4c3e90c22c7dd5613e029f641",
+    "source": "extension-updated:extension/index.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\ingest.py": {
+    "sha256": "d56e26db639b9a18876d2824e79dd0c5bdf67c9892e7b4ef9335d62d6a284367",
+    "source": "extension-updated:extension/ingest.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\intent.py": {
+    "sha256": "582a178e0cf5f9b007b916b167bb095b0f445d3b7fa77555787e55be15c514b6",
+    "source": "extension-updated:extension/intent.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\models.py": {
+    "sha256": "aa89edca9db8d5a90d7fa72709d9660571b27e340c88022d0a74c669f719938e",
+    "source": "extension-updated:extension/models.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\passages.py": {
+    "sha256": "18ccdcbae711723b2f770094def2cb080b03e6ed797c8c96187f1e8aec784584",
+    "source": "extension-updated:extension/passages.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\protocol.py": {
+    "sha256": "50fd3275671ae0041e2659c92a199a67e9316afa0b5ceaf3e3f2bb85b48b58f4",
+    "source": "extension-updated:extension/protocol.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\service.py": {
+    "sha256": "c7df59919aadb002a5c519b00e696712b165a7f697fbc15e9e3921461f6ff164",
+    "source": "extension-updated:extension/service.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\translate.py": {
+    "sha256": "8a163835d93b9ebba13802b0d00d3b9d992f59219ce4e3671897f64ec340a696",
+    "source": "extension-updated:extension/translate.py",
+    "identical_except_import_namespace": true
+  },
+  "search_runtime\\__init__.py": {
+    "sha256": "a424efafb96bb9e7bb3b63099ac6667934ff7bbf49fe3bb63671f45f6c422c35",
+    "source": "extension-updated:extension/__init__.py",
+    "identical_except_import_namespace": true
+  }
+}

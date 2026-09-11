@@ -2,18 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import time
+import tempfile
+from search_runtime.catalog import Catalog
+from search_runtime.factory import create
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
 from starter.agent import Agent
-from starter.cp5_dialogue import message_is_protocol_compatible
 
 from .examples import build_examples
 from .guided_options import follow_up_options, opening_options
 from .products import ProductCatalog
-from .semantic import SemanticMapper
-
+from .semantic import display_trace
 
 T = TypeVar("T")
 
@@ -30,7 +31,9 @@ class AgentRuntime:
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agent")
         self.agent: Agent | None = None
         self.products: ProductCatalog | None = None
-        self.semantic: SemanticMapper | None = None
+        self.wrapper = None
+        self.store = None
+        self._catalog_directory = None
         self.examples: list[dict[str, Any]] = []
         self.status = "initializing"
         self.error: str | None = None
@@ -47,7 +50,7 @@ class AgentRuntime:
             agent, products, semantic, examples = await self._submit(self._build)
             self.agent = agent
             self.products = products
-            self.semantic = semantic
+            self.wrapper = semantic
             self.examples = examples
             self.startup_seconds = round(time.perf_counter() - started, 3)
             self.status = "ready"
@@ -57,10 +60,13 @@ class AgentRuntime:
 
     def _build(
         self,
-    ) -> tuple[Agent, ProductCatalog, SemanticMapper, list[dict[str, Any]]]:
-        agent = Agent(self.catalog_path, enable_trace=True)
+    ) -> tuple[Agent, ProductCatalog, Any, list[dict[str, Any]]]:
+        self._catalog_directory = tempfile.TemporaryDirectory(prefix="search-ui-")
+        self.store = Catalog(self._catalog_directory.name, self.catalog_path)
+        agent = self.store.agent
+        agent._enable_trace = True
         products = ProductCatalog(self.catalog_path)
-        semantic = SemanticMapper(agent)
+        semantic = create(self.store, "minilm")
         examples = build_examples(agent, products)
         return agent, products, semantic, examples
 
@@ -80,14 +86,14 @@ class AgentRuntime:
     async def reset(self, session_id: str, profile: dict[str, Any]) -> None:
         def operation() -> None:
             agent, _ = self._require()
-            agent.reset(session_id, profile)
+            self.wrapper.reset(session_id, profile)
 
         await self._submit(operation)
 
     async def remove(self, session_id: str) -> None:
         def operation() -> None:
             if self.agent is not None:
-                self.agent._sessions.pop(session_id, None)
+                self.wrapper.close(session_id)
 
         await self._submit(operation)
 
@@ -118,18 +124,14 @@ class AgentRuntime:
             agent, products = self._require()
             state = agent._sessions[session_id]
             state["turn"] = turn
-            agent_message = message
-            semantic_trace: dict[str, Any] | None = None
-            if (
-                semantic
-                and self.semantic is not None
-                and not message_is_protocol_compatible(message)
-            ):
-                semantic_trace = self.semantic.map(message, turn)
-                canonical = semantic_trace.get("canonical_message")
-                if canonical:
-                    agent_message = str(canonical)
-            response = agent.respond(session_id, agent_message, turn, 10)
+            response = self.wrapper.respond(session_id, message, turn, 10)
+            extension_trace = self.wrapper.trace[session_id]
+            agent_message = extension_trace.get("canonical_text") or message
+            semantic_trace = (
+                display_trace(message, extension_trace, self.wrapper.converter)
+                if extension_trace["route"] != "protocol"
+                else None
+            )
             options = follow_up_options(agent, session_id) if include_trace else []
             trace = state.get("last_trace") if include_trace else None
             if trace is not None:
@@ -138,13 +140,23 @@ class AgentRuntime:
                     "input_message": message,
                     "agent_message": agent_message,
                     "semantic": semantic_trace,
+                    "extension": extension_trace,
+                    "selection": {
+                        **trace["selection"],
+                        "selected": [
+                            r["parent_asin"] for r in response["recommendations"]
+                        ],
+                        "output_k": len(response["recommendations"]),
+                    },
                 }
             return {
                 "assistant": {
                     "message": str(response.get("message") or ""),
                     "ask_attribute": response.get("ask_attribute"),
                 },
-                "recommendations": products.hydrate(response.get("recommendations") or []),
+                "recommendations": products.hydrate(
+                    response.get("recommendations") or []
+                ),
                 "message_options": options,
                 "trace": trace,
             }
@@ -157,8 +169,8 @@ class AgentRuntime:
 
         def close() -> None:
             if self.agent is not None:
-                self.agent.connection.close()
+                self.store.close()
+                self._catalog_directory.cleanup()
 
         await self._submit(close)
         self.executor.shutdown(wait=True, cancel_futures=True)
-

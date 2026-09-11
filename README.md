@@ -2,7 +2,7 @@
 
 A fully offline, standard-library conversational shopping agent that finds the
 customer's hidden target product among 50,000 catalog items. On the released
-200-session public set it scores:
+200-session public set in its original constrained format it scores:
 
 | HitRate@10 | MRR | MTTC | TechnicalScore |
 |---:|---:|---:|---:|
@@ -24,8 +24,7 @@ Next.js frontend. It has two modes:
 - **Internals** at `/internals`: guided messages plus a live visualization of
   the 50,000-product retrieval and ranking funnel.
 
-The two modes call the same `starter.agent.Agent`. The Internals mode only adds
-diagnostic output; it does not use a separate recommendation implementation.
+Both modes use `search_runtime.factory.create(store, "minilm")`. Validated protocol turns delegate to the original agent; natural turns use the shared rules/MiniLM translator and explicit conversation state. `api/semantic.py` only adapts diagnostics for display. There is no separate frontend mapper or external model API call. See [mapping and verification](docs/natural-language-mapping.md).
 
 ### Prerequisites
 
@@ -40,7 +39,9 @@ From the repository root:
 ```bash
 python3 -m venv .venv-demo
 source .venv-demo/bin/activate
-python -m pip install -r requirements-api.txt
+python -m pip install -r requirements-api.txt -r requirements-semantic.txt
+# Set SEARCH_MODEL_DIR to a local folder containing minilm/tokenizer.json
+# and minilm/onnx/model_quint8_avx2.onnx. Retained local models are auto-detected.
 uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
