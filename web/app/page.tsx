@@ -39,14 +39,6 @@ export default function Home() {
         <span className="footer-names">
           Srivathsan Ram · Arjo Das · Jun Wen Mok
         </span>
-        <span className="footer-links">
-          <a href={GITHUB_URL} target="_blank" rel="noreferrer">
-            GitHub
-          </a>
-          <a href={DEVPOST_URL} target="_blank" rel="noreferrer">
-            Devpost
-          </a>
-        </span>
         <span className="footer-copyright">© 2026 Fable7</span>
       </footer>
     </div>

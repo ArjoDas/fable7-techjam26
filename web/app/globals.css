@@ -1330,24 +1330,6 @@ button {
   font-weight: 600;
 }
 
-.site-footer .footer-links {
-  display: flex;
-  gap: 20px;
-}
-
-.site-footer a {
-  color: var(--ink);
-  font-weight: 600;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-bottom: 2px solid var(--blue-light);
-  padding-bottom: 2px;
-}
-
-.site-footer a:hover {
-  border-bottom-color: var(--ink);
-}
-
 .site-footer .footer-copyright {
   color: var(--ink-soft);
 }
