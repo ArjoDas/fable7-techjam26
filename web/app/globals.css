@@ -54,13 +54,10 @@ button {
   letter-spacing: 0.09em;
   text-transform: uppercase;
   text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex-basis: 100%;
   color: var(--ink-soft);
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
-  margin-bottom: 18px;
 }
 
 .masthead {

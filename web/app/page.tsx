@@ -7,9 +7,6 @@ const DEVPOST_URL = "https://devpost.com/software/fable7";
 export default function Home() {
   return (
     <div className="shell">
-      <div className="event-strip">
-        TikTok TechJam 2026 · Conversational search track
-      </div>
       <header className="masthead">
         <div className="masthead-brand">
           <div className="brand-mark" aria-hidden>
@@ -36,6 +33,9 @@ export default function Home() {
       <PipelineExplorer />
 
       <footer className="site-footer">
+        <div className="event-strip">
+          TikTok TechJam 2026 · Conversational search track
+        </div>
         <span className="footer-names">
           Srivathsan Ram · Arjo Das · Jun Wen Mok
         </span>
