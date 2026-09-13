@@ -165,22 +165,21 @@ button {
   margin-bottom: 24px;
 }
 
-.controls-heading {
-  display: flex;
+.example-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: -8px;
+  gap: 6px 12px;
 }
 
 .copy-example-link {
-  flex: none;
+  justify-self: center;
   width: auto;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
-  text-align: right;
+  text-align: center;
 }
 
 .copy-example-link:hover {

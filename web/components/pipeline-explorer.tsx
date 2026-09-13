@@ -270,13 +270,11 @@ export function PipelineExplorer() {
     <div>
       {header}
       <div className="controls">
-        <div className="controls-heading">
+        <div className="example-controls">
           <label className="control-label" htmlFor="example-select">
             Recorded example (target known)
           </label>
           <button className="control-label copy-example-link" onClick={copyExampleLink}>Copy example link</button>
-        </div>
-        <div className="controls-row">
           <div className="control-field">
             <select
               id="example-select"
