@@ -1530,3 +1530,46 @@ button {
     max-width: 100%;
   }
 }
+
+.demo-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--wash);
+  font-size: 14px;
+}
+
+.demo-notice > div {
+  flex: 1 1 360px;
+}
+
+.demo-notice p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+}
+
+.demo-notice a {
+  color: var(--ink);
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+
+.recorded-message {
+  margin: 0 0 22px;
+  padding: 14px 18px;
+  border-left: 3px solid var(--blue);
+  background: var(--wash);
+  overflow-wrap: anywhere;
+}
+
+.recorded-message p {
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-size: 21px;
+}

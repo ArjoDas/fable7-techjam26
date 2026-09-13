@@ -1,12 +1,7 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 
-const webBase = process.env.E2E_WEB_BASE_URL || "http://localhost:3000";
-const apiBase = process.env.E2E_API_BASE_URL || "http://localhost:8000";
-for (let attempt = 0; attempt < 60; attempt++) {
-  try { if ((await fetch(`${apiBase}/readyz`)).ok) break; } catch {}
-  await new Promise(resolve => setTimeout(resolve, 1000));
-}
+const webBase = process.env.E2E_WEB_BASE_URL || "http://127.0.0.1:3001";
 const browser = await chromium.launch({
   headless: true,
   ...(process.env.PLAYWRIGHT_CHROME_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROME_PATH } : {}),
@@ -17,14 +12,14 @@ try {
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(webBase);
   await page.locator("#example-select").waitFor({ timeout: 60000 });
-  const responsePromise = page.waitForResponse(r => r.url().endsWith("/turns") && r.request().method() === "POST");
-  await page.getByRole("button", { name: "Run", exact: true }).click();
+  const responsePromise = page.waitForResponse(r => r.url().endsWith(".structured.json"));
+  await page.getByRole("button", { name: "Play example", exact: true }).click();
   const payload = await (await responsePromise).json();
-  const product = payload.recommendations[0];
+  const product = payload.turns[0].response.recommendations[0];
   const card = page.getByRole("button", { name: `Preview ${product.title}`, exact: true });
   await card.waitFor();
   let detailRequests = 0;
-  page.on("request", request => { if (request.url().startsWith(apiBase)) detailRequests++; });
+  page.on("request", request => { if (request.url().includes("/recordings/") || request.method() !== "GET") detailRequests++; });
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await card.focus();

@@ -19,7 +19,7 @@ export function SemanticStage({
     <div>
       <div className="semantic-grid">
         <div className="semantic-column">
-          <div className="column-title">Closest catalog categories</div>
+          <div className="column-title">Matched catalog categories</div>
           {semantic.category_candidates.length === 0 && (
             <div className="match-row">
               <span className="match-value" style={{ color: "var(--ink-soft)" }}>
@@ -43,12 +43,12 @@ export function SemanticStage({
               >
                 <span className="fill" />
               </span>
-              <span className="match-score">{candidate.score.toFixed(2)}</span>
+              <span className="match-score">{candidate.semantic !== null ? candidate.semantic.toFixed(2) : candidate.lexical ? "literal" : "retained"}</span>
             </div>
           ))}
         </div>
         <div className="semantic-column">
-          <div className="column-title">Closest catalog keywords</div>
+          <div className="column-title">Matched catalog clues</div>
           {semantic.value_candidates.length === 0 && (
             <div className="match-row">
               <span className="match-value" style={{ color: "var(--ink-soft)" }}>
@@ -72,7 +72,7 @@ export function SemanticStage({
               >
                 <span className="fill" />
               </span>
-              <span className="match-score">{candidate.score.toFixed(2)}</span>
+              <span className="match-score">{candidate.semantic !== null ? candidate.semantic.toFixed(2) : candidate.lexical ? "literal" : "retained"}</span>
             </div>
           ))}
         </div>
@@ -92,10 +92,10 @@ export function SemanticStage({
       </div>
       <div className="semantic-note">
         {semantic.encoder_used
-          ? "similarity = lexical overlap blended with MiniLM cosine similarity"
-          : `lexical overlap only; encoder unavailable${
-              semantic.encoder_error ? ` (${semantic.encoder_error})` : ""
-            }`}
+          ? "Recorded MiniLM cosine similarity; literal matching was checked first."
+          : semantic.encoder_error
+            ? "The recorded turn used lexical fallback because semantic mapping was unavailable."
+            : "Literal catalog phrases and conversation rules resolved this turn; MiniLM was not needed. Scores marked retained refer to earlier clues."}
         {semantic.browsing && " · browsing tone detected"}
         {semantic.override && " · override detected"}
         {semantic.no_preference && " · no-preference detected"}

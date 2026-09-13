@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     ],
   },
   description:
-    "An animated walkthrough of how the Fable7 conversational shopping agent turns a query into ranked recommendations.",
+    "An interactive static demo of recorded Fable7 shopping conversations. Explore structured queries, natural-language mapping, and ranked recommendations.",
 };
 
 export default function RootLayout({

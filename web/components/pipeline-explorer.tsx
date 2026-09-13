@@ -1,16 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  createSession,
-  getExamples,
-  getReady,
-  sendTurn,
-} from "@/lib/api";
+import { loadManifest, loadRecording } from "@/lib/recordings";
+import type { DemoManifest, QueryMode, RecordedSession, RecordedTurn } from "@/lib/recordings";
 import type {
   AgentTrace,
-  ExampleSession,
-  TurnResponse,
 } from "@/lib/contracts";
 import { StageConnector, StageFrame } from "./stage-frame";
 import { QueryStage } from "./query-stage";
@@ -21,23 +15,13 @@ import { RerankStage } from "./rerank-stage";
 import { PrefixStage } from "./prefix-stage";
 import { DecisionStage } from "./decision-stage";
 
-type QueryMode = "structured" | "natural";
-
-type TurnView = {
-  turn: number;
-  input: string;
-  response: TurnResponse;
-};
-
 type Run = {
   sessionId: string;
   mode: QueryMode;
-  exampleId: string | null;
-  target: { asin: string; title: string } | null;
-  turns: TurnView[];
+  exampleId: string;
+  target: { asin: string; title: string };
+  turns: RecordedTurn[];
 };
-
-const FREE_ID = "__free__";
 
 function targetRanks(
   trace: AgentTrace,
@@ -59,55 +43,35 @@ function targetRanks(
 }
 
 export function PipelineExplorer() {
-  const [ready, setReady] = useState<"checking" | "initializing" | "ready" | "error">(
-    "checking",
-  );
-  const [examples, setExamples] = useState<ExampleSession[]>([]);
+  const [manifest, setManifest] = useState<DemoManifest | null>(null);
+  const [manifestError, setManifestError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
   const [mode, setMode] = useState<QueryMode>("structured");
-  const [selectedId, setSelectedId] = useState<string>("");
-  const [freeText, setFreeText] = useState("");
+  const [selectedId, setSelectedId] = useState("");
+  const [recording, setRecording] = useState<RecordedSession | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [activeTurn, setActiveTurn] = useState(0);
   const [reveal, setReveal] = useState(0);
-  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const revealTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const recordingRequest = useRef<AbortController | null>(null);
 
-  // ── readiness polling + examples ─────────────────────────
   useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const poll = async () => {
-      const status = await getReady();
-      if (cancelled) return;
-      if (status.status === "ready") {
-        setReady("ready");
-        try {
-          const payload = await getExamples();
-          if (!cancelled) {
-            setExamples(payload.examples);
-            setSelectedId((current) => current || payload.examples[0]?.id || "");
-          }
-        } catch {
-          /* examples are optional */
-        }
-        return;
-      }
-      setReady(status.status === "error" ? "error" : "initializing");
-      timer = setTimeout(poll, 2500);
-    };
-    poll();
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
+    const controller = new AbortController();
+    setManifestError(null);
+    loadManifest(controller.signal).then((payload) => {
+      if (controller.signal.aborted) return;
+      setManifest(payload);
+      setSelectedId(payload.examples[0].id);
+    }).catch((cause) => {
+      if (!controller.signal.aborted) setManifestError(cause instanceof Error ? cause.message : "Could not load the recordings.");
+    });
+    return () => controller.abort();
+  }, [retry]);
 
-  const selectedExample = useMemo(
-    () => examples.find((example) => example.id === selectedId) ?? null,
-    [examples, selectedId],
-  );
-  const isFree = mode === "natural" && selectedId === FREE_ID;
+  const examples = manifest?.examples ?? [];
+  const selectedExample = examples.find((example) => example.id === selectedId) ?? null;
 
   const activeView = run?.turns[activeTurn] ?? null;
   const activeTrace = activeView?.response.trace ?? null;
@@ -133,121 +97,64 @@ export function PipelineExplorer() {
     }
   }, []);
 
-  useEffect(() => () => revealTimers.current.forEach(clearTimeout), []);
-
-  // ── run control ──────────────────────────────────────────
-  const scriptedMessage = useCallback(
-    (example: ExampleSession, turnIndex: number) =>
-      mode === "natural"
-        ? example.turns[turnIndex]?.natural
-        : example.turns[turnIndex]?.structured,
-    [mode],
-  );
-
-  const beginRun = useCallback(async () => {
-    setError(null);
-    const firstMessage = isFree
-      ? freeText.trim()
-      : selectedExample
-        ? scriptedMessage(selectedExample, 0)
-        : "";
-    if (!firstMessage) {
-      setError(
-        isFree ? "Type a first message to start." : "Choose an example first.",
-      );
-      return;
-    }
-    setSending(true);
-    try {
-      const session = await createSession({ semantic: mode === "natural" });
-      const response = await sendTurn(session.session_id, {
-        message: firstMessage,
-      });
-      const newRun: Run = {
-        sessionId: session.session_id,
-        mode,
-        exampleId: isFree ? null : selectedExample?.id ?? null,
-        target:
-          !isFree && selectedExample
-            ? {
-                asin: selectedExample.target_asin,
-                title: selectedExample.target_title,
-              }
-            : null,
-        turns: [{ turn: 1, input: firstMessage, response }],
-      };
-      setRun(newRun);
-      setActiveTurn(0);
-      if (isFree) setFreeText("");
-      const semanticStage = Boolean(response.trace?.semantic);
-      startReveal(semanticStage ? 7 : 6);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Request failed.");
-    } finally {
-      setSending(false);
-    }
-  }, [freeText, isFree, mode, scriptedMessage, selectedExample, startReveal]);
-
-  const nextTurn = useCallback(async () => {
-    if (!run) return;
-    setError(null);
-    const turnIndex = run.turns.length;
-    let message = "";
-    if (run.exampleId) {
-      const example = examples.find((item) => item.id === run.exampleId);
-      message = example ? scriptedMessage(example, turnIndex) ?? "" : "";
-    } else {
-      message = freeText.trim();
-    }
-    if (!message) {
-      setError(
-        run.exampleId
-          ? "This example has no more scripted turns."
-          : "Type the next message first.",
-      );
-      return;
-    }
-    setSending(true);
-    try {
-      const response = await sendTurn(run.sessionId, { message });
-      const updated: Run = {
-        ...run,
-        turns: [...run.turns, { turn: turnIndex + 1, input: message, response }],
-      };
-      setRun(updated);
-      setActiveTurn(turnIndex);
-      if (!run.exampleId) setFreeText("");
-      const semanticStage = Boolean(response.trace?.semantic);
-      startReveal(semanticStage ? 7 : 6);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Request failed.");
-    } finally {
-      setSending(false);
-    }
-  }, [examples, freeText, run, scriptedMessage, startReveal]);
+  useEffect(() => () => {
+    revealTimers.current.forEach(clearTimeout);
+    recordingRequest.current?.abort();
+  }, []);
 
   const resetRun = useCallback(() => {
+    recordingRequest.current?.abort();
     revealTimers.current.forEach(clearTimeout);
+    setRecording(null);
     setRun(null);
     setActiveTurn(0);
     setReveal(0);
+    setLoading(false);
     setError(null);
   }, []);
 
-  const switchMode = useCallback(
-    (nextMode: QueryMode) => {
-      if (nextMode === mode) return;
-      setMode(nextMode);
-      resetRun();
-      if (nextMode === "structured" && selectedId === FREE_ID) {
-        setSelectedId(examples[0]?.id ?? "");
-      }
-      if (nextMode === "natural") {
-        setSelectedId(FREE_ID);
-      }
-    },
-    [examples, mode, resetRun, selectedId],
-  );
+  const beginRun = useCallback(async () => {
+    if (!selectedExample) return;
+    recordingRequest.current?.abort();
+    const controller = new AbortController();
+    recordingRequest.current = controller;
+    setError(null);
+    setLoading(true);
+    try {
+      const captured = await loadRecording(selectedExample, mode, controller.signal);
+      if (controller.signal.aborted) return;
+      setRecording(captured);
+      const first = captured.turns[0];
+      setRun({
+        sessionId: first.response.session_id,
+        mode,
+        exampleId: selectedExample.id,
+        target: { asin: selectedExample.target_asin, title: selectedExample.target_title },
+        turns: [first],
+      });
+      setActiveTurn(0);
+      startReveal(first.response.trace?.semantic ? 7 : 6);
+    } catch (cause) {
+      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Could not load this recording. Please try again.");
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
+  }, [selectedExample, mode, startReveal]);
+
+  const nextTurn = useCallback(() => {
+    if (!run || !recording) return;
+    const next = recording.turns[run.turns.length];
+    if (!next) return;
+    setRun({ ...run, turns: [...run.turns, next] });
+    setActiveTurn(run.turns.length);
+    startReveal(next.response.trace?.semantic ? 7 : 6);
+  }, [recording, run, startReveal]);
+
+  const switchMode = useCallback((nextMode: QueryMode) => {
+    if (nextMode === mode) return;
+    resetRun();
+    setMode(nextMode);
+  }, [mode, resetRun]);
 
   const viewTurn = useCallback(
     (index: number) => {
@@ -307,28 +214,20 @@ export function PipelineExplorer() {
       </div>
       <p className="subhead">
         {mode === "structured"
-          ? "Pick a scripted session and watch the agent work: it reads the query, decides buying or browsing, retrieves candidates through exact-evidence and BM25 lanes, reranks the pool, checks the evidence-prefix index, then shows ten products, abstains with one, or rotates to unseen items."
-          : "Type anything, or pick an example. Free text passes through one extra step: the closest semantic match maps your words onto the catalog's known categories and keywords before retrieval begins."}
+          ? "Pick a recorded session and follow the engine’s decisions: it reads the query, decides buying or browsing, retrieves candidates through exact-evidence and BM25 lanes, reranks the pool, checks the evidence-prefix index, then shows ten products, abstains with one, or rotates to unseen items."
+          : "Replay a recorded natural-language conversation. Follow how the engine mapped the shopper’s words onto catalog categories and clues before retrieval began."}
       </p>
     </>
   );
 
-  if (ready !== "ready") {
+  if (!manifest) {
     return (
       <div>
         {header}
-        <div className="boot-panel">
-          <div className="boot-title">
-            {ready === "error"
-              ? "The agent failed to start"
-              : "Indexing 50,000 products"}
-          </div>
-          <div className="boot-note">
-            {ready === "error"
-              ? "Check the API logs and reload."
-              : "Building the full-text, exact-evidence, and dialogue-prefix indexes. This takes about forty seconds."}
-          </div>
-          {ready !== "error" && <div className="dot-field" />}
+        <div className="boot-panel" role="status">
+          <div className="boot-title">{manifestError ? "Recordings could not be loaded" : "Loading recorded examples"}</div>
+          <p className="boot-note">{manifestError ?? "Fetching the example index. No engine or model runs in this demo."}</p>
+          {manifestError && <button className="run-button secondary" onClick={() => setRetry((value) => value + 1)}>Try again</button>}
         </div>
       </div>
     );
@@ -341,9 +240,7 @@ export function PipelineExplorer() {
         <div className="controls-row">
           <div className="control-field">
             <label className="control-label" htmlFor="example-select">
-              {mode === "structured"
-                ? "Example session (target known)"
-                : "Query"}
+              Recorded example (target known)
             </label>
             <select
               id="example-select"
@@ -353,9 +250,6 @@ export function PipelineExplorer() {
                 resetRun();
               }}
             >
-              {mode === "natural" && (
-                <option value={FREE_ID}>Type your own query</option>
-              )}
               {examples.map((example) => (
                 <option key={example.id} value={example.id}>
                   {example.label}
@@ -366,48 +260,35 @@ export function PipelineExplorer() {
           <button
             className="run-button"
             onClick={run ? resetRun : beginRun}
-            disabled={sending}
+            disabled={loading}
           >
-            {sending && !run ? (
+            {loading && !run ? (
               <>
                 <span className="spinner-inline" />
-                running
+                loading recording
               </>
             ) : run ? (
-              "New run"
+              "Reset example"
             ) : (
-              "Run"
+              "Play example"
             )}
           </button>
         </div>
-        {isFree && !run && (
-          <div className="controls-row">
-            <div className="control-field">
-              <label className="control-label" htmlFor="free-first">
-                Your first message
-              </label>
-              <input
-                id="free-first"
-                type="text"
-                value={freeText}
-                maxLength={400}
-                placeholder="e.g. I need a durable leather belt for jeans"
-                onChange={(event) => setFreeText(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") beginRun();
-                }}
-              />
-            </div>
-          </div>
-        )}
-        {error && <div className="status-line error">{error}</div>}
-        {!run && selectedExample && !isFree && (
+        {error && <div className="status-line error" role="alert">{error}</div>}
+        {!run && selectedExample && (
           <div className="status-line">
-            {selectedExample.turns.length} scripted turns · target:{" "}
+            {selectedExample.turns.length} recorded turns · target:{" "}
             {selectedExample.target_title.slice(0, 90)}
           </div>
         )}
       </div>
+
+      {selectedExample && (
+        <div className="recorded-message">
+          <span className="control-label">{activeView ? `Recorded shopper message · turn ${activeView.turn}` : "First recorded shopper message"}</span>
+          <p>{activeView?.input ?? selectedExample.turns[0][mode]}</p>
+        </div>
+      )}
 
       {run && target && (
         <div className={`target-banner ${foundAtTurn !== null ? "found" : ""}`}>
@@ -466,49 +347,15 @@ export function PipelineExplorer() {
               </button>
             );
           })}
-          {run.exampleId ? (
-            scriptedRemaining !== null &&
-            scriptedRemaining > 0 && (
-              <button
-                className="run-button secondary"
-                onClick={nextTurn}
-                disabled={sending}
-              >
-                {sending ? (
-                  <>
-                    <span className="spinner-inline" />
-                    sending
-                  </>
-                ) : (
-                  `Next turn (${scriptedRemaining} left)`
-                )}
-              </button>
-            )
-          ) : (
-            <div className="free-input-row">
-              <input
-                type="text"
-                value={freeText}
-                maxLength={400}
-                placeholder="Add another requirement, or repeat the same one to trigger rotation"
-                onChange={(event) => setFreeText(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") nextTurn();
-                }}
-              />
-              <button
-                className="run-button secondary"
-                onClick={nextTurn}
-                disabled={sending}
-              >
-                {sending ? "Sending" : "Send"}
-              </button>
-            </div>
+          {scriptedRemaining !== null && scriptedRemaining > 0 && (
+            <button className="run-button secondary" onClick={nextTurn}>
+              Next turn ({scriptedRemaining} left)
+            </button>
           )}
           <button
             className="run-button secondary"
             onClick={() => startReveal(stageCount)}
-            disabled={sending || !activeTrace}
+            disabled={!activeTrace}
           >
             Replay animation
           </button>
@@ -539,8 +386,8 @@ export function PipelineExplorer() {
             ];
             if (hasSemanticStage && activeTrace.semantic) {
               stages.push({
-                title: "Closest semantic match",
-                sub: "Free text is matched against the catalog's known categories and disclosure keywords: lexical shortlist first, then MiniLM cosine similarity.",
+                title: "Natural-language mapping",
+                sub: "Recorded category and clue matching. Literal phrases are resolved first; MiniLM scores unfamiliar wording only when needed.",
                 node: (
                   <SemanticStage
                     trace={activeTrace}
@@ -611,12 +458,12 @@ export function PipelineExplorer() {
       {!run && (
         <div className="boot-panel">
           <div className="boot-title">
-            {isFree ? "Type a query and press Run" : "Pick an example and press Run"}
+            Pick an example and press Play example
           </div>
           <div className="boot-note">
             {mode === "structured"
-              ? "Each example scripts a full conversation toward a known target product, so you can watch it climb to rank 1."
-              : "Your words are matched to the closest catalog vocabulary before retrieval. Examples with known targets are also available in the dropdown."}
+              ? "Each recording follows a real conversation toward a known target product. Advance through its turns to inspect the engine’s decisions."
+              : "These natural-language messages and responses were recorded from the real engine. Choose an example to inspect how its wording was interpreted."}
           </div>
           <div className="dot-field" />
         </div>

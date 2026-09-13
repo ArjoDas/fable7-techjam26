@@ -59,7 +59,7 @@ export function QueryStage({ trace }: { trace: AgentTrace }) {
       {isTranslated ? (
         <div className="annotation-legend">
           <span className="legend-item">
-            Free text. The next step matches it against the catalog vocabulary.
+            Recorded natural-language input. The mapping stage shows how it was interpreted.
           </span>
         </div>
       ) : (

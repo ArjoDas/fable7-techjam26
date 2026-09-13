@@ -1,8 +1,7 @@
 import Image from "next/image";
 import { PipelineExplorer } from "@/components/pipeline-explorer";
 
-const GITHUB_URL =
-  "https://github.com/SrivathsanRam/tiktok-techjam-conversational-search";
+import { REPOSITORY_URL, LIVE_DEMO_URL } from "@/lib/site";
 const DEVPOST_URL = "https://devpost.com/software/fable7";
 
 export default function Home() {
@@ -23,7 +22,7 @@ export default function Home() {
           </div>
         </div>
         <nav className="masthead-links">
-          <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+          <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
             GitHub
           </a>
           <a href={DEVPOST_URL} target="_blank" rel="noreferrer">
@@ -33,6 +32,13 @@ export default function Home() {
       </header>
 
       <main className="pipeline-main">
+        <aside className="demo-notice" aria-label="About this demo">
+          <div>
+            <strong>Static demo · Recorded engine responses</strong>
+            <p>Explore real structured-query and natural-language sessions. No queries are executed on this website.</p>
+          </div>
+          <a href={LIVE_DEMO_URL} target="_blank" rel="noreferrer">Run the live demo locally ↗</a>
+        </aside>
         <PipelineExplorer />
       </main>
 
