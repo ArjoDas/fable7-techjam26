@@ -15,104 +15,69 @@ history behind this result (six checkpoints, all accepted and rejected
 variants, and the parallel unmerged branch lines) is in
 [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
-## Fable7 Web Demo Quickstart
+## Static Web Demo Quickstart
 
-The demo exposes this repository's agent through a FastAPI service and a
-Next.js frontend. It has two modes:
+**`arjo-static-demo` is the resume/demo branch.** It plays genuine recorded engine
+responses, with 12 examples in both structured-query and natural-language modes
+(24 sessions, 68 turns). It does not execute queries or accept arbitrary messages.
+The pipeline animation, turn history, target tracking, and full catalog previews
+remain interactive. The address bar and **Copy example link** share an example
+and its selected mode.
 
-- **Shop** at `/demo`: unrestricted, free-form shopping conversation.
-- **Internals** at `/internals`: guided messages plus a live visualization of
-  the 50,000-product retrieval and ranking funnel.
+For the live application and instructions to run your own structured or
+natural-language sessions, use
+[the main branch](https://github.com/ArjoDas/fable7-techjam26) and its
+[live demo quickstart](https://github.com/ArjoDas/fable7-techjam26/blob/main/README.md#fable7-web-demo-quickstart).
+The research and backend files below remain here for reference and recording
+regeneration; the static website does not load them.
 
-Both modes use `search_runtime.factory.create(store, "minilm")`. Validated protocol turns delegate to the original agent; natural turns use the shared rules/MiniLM translator and explicit conversation state. `api/semantic.py` only adapts diagnostics for display. There is no separate frontend mapper or external model API call. See [mapping and verification](docs/natural-language-mapping.md).
+### Run and build
 
-### Prerequisites
-
-- Python 3.10 or later with SQLite FTS5
-- Node.js 20.9 or later and npm
-- `data/catalog.jsonl` from the catalog setup in [Get the catalog](#setup-and-reproducing-our-results)
-
-### 1. Start the API
-
-From the repository root:
-
-```bash
-python3 -m venv .venv-demo
-source .venv-demo/bin/activate
-python -m pip install -r requirements-api.txt -r requirements-semantic.txt
-# Set SEARCH_MODEL_DIR to a local folder containing minilm/tokenizer.json
-# and minilm/onnx/model_quint8_avx2.onnx. Retained local models are auto-detected.
-uvicorn api.main:app --host 127.0.0.1 --port 8000
-```
-
-The API starts serving immediately while the catalog indexes are prepared in a
-background thread. Check readiness with:
-
-```bash
-curl http://127.0.0.1:8000/readyz
-```
-
-Wait for `"status":"ready"` before opening a conversation. The documented
-development-machine cold start for the evaluator is about 44 seconds; the
-actual API startup time is included in the readiness response.
-
-### 2. Start the frontend
-
-In a second terminal:
+Requires Node.js 20.9+ and npm. No Python, catalog download, model, API, or secrets
+are needed to build the website.
 
 ```bash
 cd web
-cp .env.example .env.local
-npm install
+npm ci
 npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000). Choose **Open the engine**
-for the guided internals demo or **Try the conversation** for the shopper view.
-
-### Configuration
-
-The API accepts these optional environment variables:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `CATALOG_PATH` | `data/catalog.jsonl` | Frozen catalog location |
-| `ALLOWED_ORIGINS` | localhost ports on `3000` | Comma-separated browser origins |
-| `SESSION_TTL_SECONDS` | `1800` | Inactive in-memory session lifetime |
-
-The frontend uses `NEXT_PUBLIC_API_BASE_URL`, defined in `web/.env.example`.
-Public frontend variables are embedded at build time, so set it before
-`npm run build` for a deployed API.
-
-### Verify the demo
-
-With the Python environment active and both local servers running:
-
-```bash
-python -m unittest tests.test_api -v
-python -m unittest discover tests -v
-cd web
+# Open http://localhost:3000
 npm run typecheck
 npm run build
+```
+
+The deployable site is **`web/out/`**. To check that exact output locally with
+Python's optional static file server, run from the repository root:
+
+```bash
+python3 -m http.server 3001 --bind 127.0.0.1 --directory web/out
+```
+
+Open http://127.0.0.1:3001. `next start` is not used for static exports.
+
+### Deploy as a static site
+
+Import `ArjoDas/fable7-techjam26`, select branch `arjo-static-demo`, set the project
+root to `web`, run `npm run build`, and publish `out`. These are also the settings
+for a Vercel project; select this branch as the production branch for this demo.
+No backend service, environment variables, or persistent compute is required.
+The site assumes it is hosted at the domain root.
+
+### Verify and regenerate recordings
+
+With the exported site served on port 3001:
+
+```bash
+cd web
+npx playwright install chromium
 npm run test:e2e
+node tests/product-preview.mjs
+node tests/sharing.mjs
 ```
 
-The browser test uses an installed Google Chrome by default. Override its path
-when needed:
-
-```bash
-PLAYWRIGHT_CHROME_PATH=/path/to/chrome npm run test:e2e
-```
-
-The API can also run as a single-worker container:
-
-```bash
-docker build -f Dockerfile.api -t techjam-agent-api .
-docker run --rm -p 8000:8000 techjam-agent-api
-```
-
-Use one API worker for this MVP. The agent's SQLite indexes and conversation
-sessions are process-local.
+Alternatively set `PLAYWRIGHT_CHROME_PATH` to an existing Chrome executable.
+Set `E2E_WEB_BASE_URL` to test a different origin. The playback test blocks external
+services and rejects backend calls. See [recording provenance and regeneration](docs/static-demo.md)
+for how the saved responses were captured and how to refresh them.
 
 ## The Challenge
 

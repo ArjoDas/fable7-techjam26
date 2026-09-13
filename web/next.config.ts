@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Vercel's adapter handles packaging; standalone output is for self-hosting.
-  output: process.env.VERCEL === "1" ? undefined : "standalone",
+  // Deploy the generated out/ directory to any static host.
+  output: "export",
 };
 
 export default nextConfig;
