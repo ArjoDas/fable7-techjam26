@@ -175,11 +175,11 @@ button {
 }
 
 .headline-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
   gap: 28px;
-  flex-wrap: wrap;
   margin: 26px 0 8px;
 }
 
@@ -1337,6 +1337,21 @@ button {
 /* ── responsive / motion ───────────────────────────────── */
 
 @media (max-width: 900px) {
+  .headline-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .mode-toggle {
+    justify-self: start;
+    max-width: 100%;
+  }
+
+  .mode-toggle button {
+    padding: 12px;
+    font-size: 11px;
+  }
+
   .shell {
     padding: 20px 16px 60px;
   }
