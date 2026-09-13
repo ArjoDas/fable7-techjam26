@@ -38,10 +38,10 @@ export default function Home() {
 
       <footer className="site-footer">
         <div className="event-strip">
-          TikTok TechJam 2026 · Conversational search track
+          TikTok TechJam 2026, Conversational search (track 4)
         </div>
         <span className="footer-names">
-          Srivathsan Ram · Arjo Das · Jun Wen Mok
+          Srivathsan Ram, Arjo Das, Jun Wen Mok
         </span>
         <span className="footer-copyright">© 2026 Fable7</span>
       </footer>
