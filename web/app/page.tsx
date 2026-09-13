@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { PipelineExplorer } from "@/components/pipeline-explorer";
 
 const GITHUB_URL =
@@ -9,13 +10,14 @@ export default function Home() {
     <div className="shell">
       <header className="masthead">
         <div className="masthead-brand">
-          <div className="brand-mark" aria-hidden>
-            <div className="book-left" />
-            <div className="book-right" />
-            <div className="book-spine" />
-            <div className="lens" />
-            <div className="lens-handle" />
-          </div>
+          <Image
+            className="brand-mark"
+            src="/icon.svg"
+            alt=""
+            width={52}
+            height={52}
+            unoptimized
+          />
           <div className="brand-name">
             Fable<em>7</em>
           </div>
