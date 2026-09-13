@@ -53,6 +53,7 @@ export function PipelineExplorer() {
   const [activeTurn, setActiveTurn] = useState(0);
   const [reveal, setReveal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const revealTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const recordingRequest = useRef<AbortController | null>(null);
@@ -63,7 +64,9 @@ export function PipelineExplorer() {
     loadManifest(controller.signal).then((payload) => {
       if (controller.signal.aborted) return;
       setManifest(payload);
-      setSelectedId(payload.examples[0].id);
+      const params = new URLSearchParams(window.location.search);
+      setSelectedId(payload.examples.find((example) => example.id === params.get("example"))?.id ?? payload.examples[0].id);
+      setMode(params.get("mode") === "natural" ? "natural" : "structured");
     }).catch((cause) => {
       if (!controller.signal.aborted) setManifestError(cause instanceof Error ? cause.message : "Could not load the recordings.");
     });
@@ -112,6 +115,36 @@ export function PipelineExplorer() {
     setLoading(false);
     setError(null);
   }, []);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("example", selectedId);
+    url.searchParams.set("mode", mode);
+    window.history.replaceState(null, "", url);
+    setShareStatus("");
+  }, [selectedId, mode]);
+
+  useEffect(() => {
+    if (!manifest) return;
+    const restoreSelection = () => {
+      const params = new URLSearchParams(window.location.search);
+      resetRun();
+      setSelectedId(manifest.examples.find((example) => example.id === params.get("example"))?.id ?? manifest.examples[0].id);
+      setMode(params.get("mode") === "natural" ? "natural" : "structured");
+    };
+    window.addEventListener("popstate", restoreSelection);
+    return () => window.removeEventListener("popstate", restoreSelection);
+  }, [manifest, resetRun]);
+
+  const copyExampleLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareStatus("Example link copied.");
+    } catch {
+      setShareStatus("Copy the URL from your address bar to share this example.");
+    }
+  };
 
   const beginRun = useCallback(async () => {
     if (!selectedExample) return;
@@ -274,6 +307,8 @@ export function PipelineExplorer() {
             )}
           </button>
         </div>
+        <button className="run-button secondary" onClick={copyExampleLink}>Copy example link</button>
+        <span className="status-line" role="status">{shareStatus}</span>
         {error && <div className="status-line error" role="alert">{error}</div>}
         {!run && selectedExample && (
           <div className="status-line">
