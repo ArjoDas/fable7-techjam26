@@ -32,7 +32,9 @@ export default function Home() {
         </nav>
       </header>
 
-      <PipelineExplorer />
+      <main className="pipeline-main">
+        <PipelineExplorer />
+      </main>
 
       <footer className="site-footer">
         <div className="event-strip">

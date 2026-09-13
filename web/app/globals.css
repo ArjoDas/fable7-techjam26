@@ -42,9 +42,17 @@ button {
 /* ── shell ─────────────────────────────────────────────── */
 
 .shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
   max-width: 1240px;
   margin: 0 auto;
   padding: 14px 32px 56px;
+}
+
+.pipeline-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .event-strip {
