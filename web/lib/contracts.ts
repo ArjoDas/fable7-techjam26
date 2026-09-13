@@ -128,6 +128,10 @@ export type ProductCard = {
   rating_number: number | null;
   category: string;
   feature: string;
+  features: string[];
+  description: string[];
+  categories: string[];
+  details: Record<string, unknown>;
 };
 
 export type SessionResponse = {

@@ -38,6 +38,10 @@ class ProductCard(BaseModel):
     rating_number: int | None = None
     category: str = ""
     feature: str = ""
+    features: list[str] = Field(default_factory=list)
+    description: list[str] = Field(default_factory=list)
+    categories: list[str] = Field(default_factory=list)
+    details: dict[str, Any] = Field(default_factory=dict)
 
 
 class AssistantMessage(BaseModel):

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { ProductPreview } from "./product-preview";
 import type { AgentTrace, ProductCard, TurnResponse } from "@/lib/contracts";
 
 function decisionCopy(
@@ -49,6 +51,7 @@ export function DecisionStage({
   response: TurnResponse;
   targetAsin: string | null;
 }) {
+  const [preview, setPreview] = useState<ProductCard | null>(null);
   const targetShownFirst =
     targetAsin !== null &&
     response.recommendations[0]?.parent_asin === targetAsin;
@@ -74,7 +77,11 @@ export function DecisionStage({
         )}
       <div className="product-grid">
         {response.recommendations.map((product: ProductCard, index: number) => (
-          <div
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-label={`Preview ${product.title}`}
+            onClick={() => setPreview(product)}
             key={product.parent_asin}
             className={`product-card ${
               product.parent_asin === targetAsin ? "is-target" : ""
@@ -93,9 +100,11 @@ export function DecisionStage({
                 ` · ★ ${product.average_rating.toFixed(1)}`}
             </span>
             {product.store && <span className="card-meta">{product.store}</span>}
-          </div>
+            <span className="card-preview-hint">View catalog details ↗</span>
+          </button>
         ))}
       </div>
+      {preview && <ProductPreview product={preview} onClose={() => setPreview(null)} />}
       <p className="assistant-line">
         Agent: &ldquo;{response.assistant.message}&rdquo;
       </p>

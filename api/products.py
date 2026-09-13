@@ -23,7 +23,7 @@ def _category_label(categories: object) -> str:
 
 
 class ProductCatalog:
-    """Small display projection of the frozen catalog."""
+    """Full catalog items with normalized display metadata."""
 
     def __init__(self, catalog_path: str | Path) -> None:
         self.cards: dict[str, dict[str, Any]] = {}
@@ -68,13 +68,17 @@ class ProductCatalog:
                     rating_number = None
                 self.cards[asin] = {
                     "parent_asin": asin,
-                    "title": _short(product.get("title") or asin, 180),
+                    "title": str(product.get("title") or asin),
                     "price": price,
-                    "store": _short(product.get("store"), 80),
+                    "store": str(product.get("store") or ""),
                     "average_rating": rating,
                     "rating_number": rating_number,
                     "category": _short(category_label, 70),
                     "feature": feature,
+                    "features": product.get("features") or [],
+                    "description": product.get("description") or [],
+                    "categories": categories or [],
+                    "details": product.get("details") or {},
                 }
         self.categories = [
             {"value": value, "label": labels[value], "count": count}

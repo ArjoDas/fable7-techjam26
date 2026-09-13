@@ -97,7 +97,10 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(payload["turn"], 1)
         self.assertIsNone(payload["trace"])
         self.assertTrue(payload["recommendations"])
-        self.assertIn("title", payload["recommendations"][0])
+        source = {p["parent_asin"]: p for p in map(json.loads, self.catalog_path.read_text().splitlines())}
+        for product in payload["recommendations"]:
+            for field in ("title", "features", "description", "categories", "details", "store"):
+                self.assertEqual(product[field], source[product["parent_asin"]][field])
 
     def test_internals_session_requires_issued_option_and_returns_trace(self) -> None:
         created = self.client.post("/v1/sessions", json={"mode": "internals"})
