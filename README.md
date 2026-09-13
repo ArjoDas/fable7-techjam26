@@ -401,7 +401,7 @@ leans on that.
   noisier private set that trade-off could reverse, and we would revisit the
   neural fallback first.
 - **Irreducible ties.** The remaining errors are groups of products that are
-  observationally identical given every disclosable attribute; one synthetic
+  observationally identical given every disclosable attribute. One synthetic
   target sits at popularity rank 18 inside a 29-product equivalence class and
   no ranking can find it sooner. A smarter question policy (asking the
   attribute that maximally splits the current candidate group — prototyped on
