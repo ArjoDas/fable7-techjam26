@@ -16,13 +16,13 @@ export function StageFrame({
   children: ReactNode;
 }) {
   return (
-    <section className={`stage ${revealed ? "revealed" : ""}`} aria-hidden={!revealed}>
-      <div className="stage-number">{number}</div>
-      <div>
+    <section className={`stage ${revealed ? "revealed" : ""}`} aria-hidden={!revealed} inert={!revealed}>
+      <header className="stage-heading">
+        <div className="stage-number">{number}</div>
         <h2 className="stage-title">{title}</h2>
         <p className="stage-sub">{sub}</p>
-        {children}
-      </div>
+      </header>
+      <div className="stage-content">{children}</div>
     </section>
   );
 }

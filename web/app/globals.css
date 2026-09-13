@@ -483,6 +483,8 @@ button {
 /* ── stages ────────────────────────────────────────────── */
 
 .stage-rail {
+  width: min(100%, 960px);
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -490,8 +492,8 @@ button {
 
 .stage {
   display: grid;
-  grid-template-columns: 88px 1fr;
-  gap: 0 20px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
   border: 1.5px solid var(--line);
   border-radius: 10px;
   padding: 18px 24px;
@@ -510,15 +512,22 @@ button {
   display: none;
 }
 
+.stage-heading,
+.stage-content {
+  min-width: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .stage-number {
   font-family: var(--serif);
   font-style: italic;
-  font-size: 62px;
+  font-size: 38px;
   font-weight: 500;
   line-height: 1;
   color: var(--blue);
   text-align: center;
-  padding-top: 2px;
+  margin-bottom: 8px;
 }
 
 .stage-title {
@@ -533,8 +542,8 @@ button {
 .stage-sub {
   font-size: 14.5px;
   color: var(--ink-soft);
-  margin: 0 0 14px;
-  max-width: 860px;
+  margin: 0 auto;
+  max-width: 680px;
 }
 
 .stage-connector {
@@ -978,6 +987,8 @@ button {
 }
 
 .rerank-list {
+  margin-inline: auto;
+  text-align: left;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -1166,7 +1177,7 @@ button {
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
   gap: 12px;
 }
 
@@ -1360,9 +1371,8 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .stage-number {
-    text-align: left;
-    font-size: 38px;
+  .stage {
+    padding: 18px 16px;
   }
 
   .semantic-grid {
@@ -1482,4 +1492,93 @@ button {
 .preview-specs > div {
   padding: 12px 0;
   border-bottom: 1px solid var(--line);
+}
+
+/* Center stage summaries and controls; preserve alignment within data rows. */
+.stage-content :is(.verdict-row, .badge-row, .annotation-legend, .rerank-controls,
+  .prefix-key, .decision-banner, .rotation-skipped, .pool-legend) {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stage-content :is(.query-message, .rerank-note) {
+  margin-inline: auto;
+}
+
+.stage-content :is(.lane-name, .semantic-column) {
+  text-align: left;
+}
+
+.product-grid:has(> :only-child) {
+  max-width: 340px;
+  margin-inline: auto;
+}
+
+.prefix-result,
+.merge-summary {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.prefix-result .lane-dots,
+.pool-dots {
+  justify-content: center;
+}
+
+.pool-legend {
+  grid-column: 1;
+}
+
+.prefix-crumb-wrap {
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .rerank-row {
+    grid-template-columns: 26px minmax(0, 1fr) 44px 42px;
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .prefix-result ~ .rerank-list .rerank-row {
+    grid-template-columns: 26px minmax(0, 1fr);
+  }
+
+  .prefix-result ~ .rerank-list .rerank-row > span:empty {
+    display: none;
+  }
+
+  .controls-row {
+    flex-wrap: wrap;
+  }
+
+  .control-field {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .masthead {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .free-input-row {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .free-input-row input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .target-banner .target-copy {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .dot-field {
+    max-width: 100%;
+  }
 }
