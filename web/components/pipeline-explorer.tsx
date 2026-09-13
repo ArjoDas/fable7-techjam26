@@ -270,11 +270,14 @@ export function PipelineExplorer() {
     <div>
       {header}
       <div className="controls">
+        <div className="controls-heading">
+          <label className="control-label" htmlFor="example-select">
+            Recorded example (target known)
+          </label>
+          <button className="control-label copy-example-link" onClick={copyExampleLink}>Copy example link</button>
+        </div>
         <div className="controls-row">
           <div className="control-field">
-            <label className="control-label" htmlFor="example-select">
-              Recorded example (target known)
-            </label>
             <select
               id="example-select"
               value={selectedId}
@@ -307,7 +310,6 @@ export function PipelineExplorer() {
             )}
           </button>
         </div>
-        <button className="run-button secondary" onClick={copyExampleLink}>Copy example link</button>
         <span className="status-line" role="status">{shareStatus}</span>
         {error && <div className="status-line error" role="alert">{error}</div>}
         {!run && selectedExample && (
