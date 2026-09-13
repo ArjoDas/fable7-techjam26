@@ -34,7 +34,7 @@ export default function Home() {
       <main className="pipeline-main">
         <aside className="demo-notice" aria-label="About this demo">
           <div>
-            <strong>Static Demo with Recorded Agent Responses to Reduce Hosting Costs</strong>
+            <strong>This is a static demo with recorded agent responses to minimise hosting costs</strong>
             <p>Explore real structured-query and natural-language sessions, by running our demo locally <a href={LIVE_DEMO_URL} target="_blank" rel="noreferrer">here</a>.</p>
           </div>
         </aside>

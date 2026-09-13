@@ -31,3 +31,4 @@ dev-assets/
 
 # Retained local verification catalogs, caches, and raw turns.
 /data/search/
+.vercel
