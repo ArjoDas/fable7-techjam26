@@ -3,6 +3,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Fable7 · From prompt to results",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml", sizes: "any", media: "(prefers-color-scheme: light)" },
+      { url: "/icon-dark.svg", type: "image/svg+xml", sizes: "any", media: "(prefers-color-scheme: dark)" },
+    ],
+  },
   description:
     "An animated walkthrough of how the Fable7 conversational shopping agent turns a query into ranked recommendations.",
 };

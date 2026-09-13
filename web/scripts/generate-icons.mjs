@@ -5,7 +5,11 @@ import sharp from "sharp";
 import { fileURLToPath } from "node:url";
 
 const app = new URL("../app/", import.meta.url);
-const svg = await readFile(new URL("icon.svg", app));
+const publicDir = new URL("../public/", import.meta.url);
+const svg = await readFile(new URL("icon.svg", publicDir));
+// Keep both favicon themes in sync with the shared header artwork.
+const darkSvg = svg.toString().replaceAll("#1B2740", "#B8C8E5");
+await writeFile(new URL("icon-dark.svg", publicDir), darkSvg);
 await sharp(svg).resize(180, 180).png().toFile(fileURLToPath(new URL("apple-icon.png", app)));
 
 // ICO supports PNG-encoded entries; include common browser-tab resolutions.
@@ -25,4 +29,4 @@ images.forEach((png, index) => {
   offset += png.length;
 });
 await writeFile(new URL("favicon.ico", app), Buffer.concat([header, ...images]));
-console.log("Generated favicon.ico (16/32/48px) and apple-icon.png (180px).");
+console.log("Generated icon-dark.svg, favicon.ico (16/32/48px), and apple-icon.png (180px).");
